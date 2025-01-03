@@ -38,6 +38,11 @@
 	top: 215px;
 }
 
+#choice_3
+{
+	top: 310px;
+}
+
 .choice_label
 {
 	white-space: nowrap;
@@ -125,7 +130,7 @@
 	position: absolute;
 	transform: translate(-50%, -50%);
 	width: 40%;
-	top: 340px;
+	top: 440px;
 	left: 50%;
 }
 
@@ -134,7 +139,7 @@
 	position: absolute;
 	transform: translate(-50%, -50%);
 	width: 40%;
-	top: 420px;
+	top: 520px;
 	left: 50%;
 }
 
