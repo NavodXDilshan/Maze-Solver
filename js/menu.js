@@ -26,6 +26,7 @@ function clear()
 
 function menu_event_listeners()
 {
+	
 	document.querySelector("#slct_2").addEventListener('change', event =>
 	{
 		maze_generators();
