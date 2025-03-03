@@ -1,4 +1,4 @@
-let initial_max_grid_size = 11;
+let initial_max_grid_size = 9;
 document.addEventListener("DOMContentLoaded", () => {
 
 // Function to update initial_max_grid_size based on the selected maze size
@@ -8,7 +8,7 @@ function updateMaxGridSize() {
 
     switch (selectedValue) {
         case 1: // 3 x 3
-            initial_max_grid_size = 3;
+            initial_max_grid_size = 5;
             break;
         case 2: // 9 x 9
             initial_max_grid_size = 9;
@@ -21,6 +21,7 @@ function updateMaxGridSize() {
     }
 
     console.log(`Updated initial_max_grid_size: ${initial_max_grid_size}`);
+    // fetchMazeData()
     maze_generators();
 }
 

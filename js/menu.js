@@ -18,6 +18,24 @@ function hidden_clear()
 	}
 }
 
+function hidden_clear_vision()
+{
+	for (let i = 0; i < timeouts.length; i++)
+		clearTimeout(timeouts[i]);
+
+	timeouts = [];
+	clearInterval(my_interval);
+	delete_grid();
+
+	if (window.innerWidth > menu_width + 50)
+	{
+		init_css_properties_before();
+		generate_grid_vision();
+		init_css_properties_after();
+		visualizer_event_listeners();
+	}
+}
+
 function clear()
 {
 	document.querySelector("#slct_2").value = "0";

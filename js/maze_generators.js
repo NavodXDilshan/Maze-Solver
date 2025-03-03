@@ -369,73 +369,73 @@ function aldous_broder_algorithm()
 	}, 28);
 }
 
-function recursive_division()
-{
-	enclose();
-	let time = 0;
-	let step = 17;
-	timeouts = [];
-
-	function sub_recursive_division(x_min, y_min, x_max, y_max)
-	{
-		if (y_max - y_min > x_max - x_min)
-		{
-			let x = random_int(x_min + 1, x_max);
-			let y = random_int(y_min + 2, y_max - 1);
-
-			if ((x - x_min) % 2 == 0)
-				x += (random_int(0, 2) == 0 ? 1 : -1);
-
-			if ((y - y_min) % 2 == 1)
-				y += (random_int(0, 2) == 0 ? 1 : -1);
-
-			for (let i = x_min + 1; i < x_max; i++)
-				if (i != x)
-				{
-					time += step;
-					timeouts.push(setTimeout(function() { add_wall(i, y); }, time));
-				}
-
-			if (y - y_min > 2)
-				sub_recursive_division(x_min, y_min, x_max, y);
-
-			if (y_max - y > 2)
-				sub_recursive_division(x_min, y, x_max, y_max);
-		}
-
-		else
-		{
-			let x = random_int(x_min + 2, x_max - 1);
-			let y = random_int(y_min + 1, y_max);
-
-			if ((x - x_min) % 2 == 1)
-				x += (random_int(0, 2) == 0 ? 1 : -1);
-
-			if ((y - y_min) % 2 == 0)
-				y += (random_int(0, 2) == 0 ? 1 : -1);
-
-			for (let i = y_min + 1; i < y_max; i++)
-				if (i != y)
-				{
-					time += step;
-					timeouts.push(setTimeout(function() { add_wall(x, i); }, time));
-				}
-
-			if (x - x_min > 2)
-				sub_recursive_division(x_min, y_min, x, y_max);
-
-			if (x_max - x > 2)
-				sub_recursive_division(x, y_min, x_max, y_max);
-		}
-	}
-
-	sub_recursive_division(0, 0, grid.length - 1, grid[0].length - 1);
-	timeouts.push(setTimeout(function() { generating = false; timeouts = [] }, time));
+async function fetchMazeData() {
+    try {
+        const response = await fetch("/mazeData.json"); // Ensure maze.json is in the correct location
+        const mazeData = await response.json();
+        input_image(mazeData);
+    } catch (error) {
+        console.error("Error loading maze data:", error);
+    }
 }
+
+function input_image(mazeData) {
+    console.log(mazeData.height);
+	let initial_max_grid_size = mazeData.height;
+    let grid = mazeData.grid;
+    let width = mazeData.width;
+    let height = mazeData.height;
+    let start_pos = mazeData.start;  // Start position [x, y]
+    let target_pos = mazeData.end;   // Target position [x, y]
+
+    let time = 0;
+    let step = 17;
+    let timeouts = [];
+
+    // Add start and target markers, assuming place_to_cell() returns a DOM element:
+    // Uncomment these lines if you need to mark the start and target positions in the DOM
+    // place_to_cell(start[0], start[1]).classList.add("start");
+    // place_to_cell(target[0], target[1]).classList.add("target");
+	// place_to_cell(start_pos[0], start_pos[1]).classList.remove("start");
+	place_to_cell(start_pos[0], start_pos[0]).classList.add("start");
+	// place_to_cell(target_pos[0], target_pos[1]).classList.remove("target");
+	place_to_cell(target_pos[0], target_pos[0]).classList.add("target");
+    // Function to add walls from the JSON data
+    function add_walls_from_json() {
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                if (grid[y][x] === '1') {  // Wall is represented by '1'
+					console.log(grid[y[x]])
+                    time += step;
+                    // Delay the wall addition by using setTimeout
+                    timeouts.push(setTimeout(function () { 
+                        add_wall(x, y); 
+                    }, time));
+					// cell.classList.add("cell_wall");
+                }
+            }
+        }
+    }
+
+    // Start adding walls from the grid
+    add_walls_from_json();
+
+    // After all walls are added, mark generation as complete
+    timeouts.push(setTimeout(function () {
+        generating = false;  // Set 'generating' to false to indicate the process is finished
+        timeouts = [];       // Clear timeouts array
+    }, time));
+}
+
+
+// Call function to load and process the JSON maze data
+
+
 
 function maze_generators()
 {
 	let start_temp = start_pos;
+	console.log(start_temp);
 	let target_temp = target_pos;
 	hidden_clear();
 	generating = true;
@@ -498,4 +498,12 @@ function maze_generators()
 
 	else if (document.querySelector("#slct_2").value == "6")
 		recursive_division();
+
+	else if (document.querySelector("#slct_2").value == "7"){
+		// place_to_cell(start_pos[0], start_pos[1]).classList.remove("start");
+		// place_to_cell(target_pos[0], target_pos[1]).classList.remove("target");
+		clear_grid();
+		hidden_clear_vision();
+		fetchMazeData();
+		input_image();}
 }
