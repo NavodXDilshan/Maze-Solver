@@ -26,22 +26,22 @@
 }
 
 #choice_1 {
-    margin-top: 10px; /* Reduced from 70px to 40px to lift content */
+    margin-top: 5px; /* Reduced from 70px to 40px to lift content */
 }
 
 #choice_2 {
-    margin-top: 10px; /* Reduced from 20px to 10px */
+    margin-top: 5px; /* Reduced from 20px to 10px */
 }
 
 #choice_3 {
-    margin-top: 10px; /* Reduced from 20px to 10px */
+    margin-top: 5px; /* Reduced from 20px to 10px */
 }
 
 .choice_label {
     white-space: nowrap;
     color: #404d68;
     font-size: 18px;
-    margin-bottom: 8px; /* Reduced from 10px to 8px */
+    margin-bottom: 5px; /* Reduced from 10px to 8px */
 }
 
 .select {
