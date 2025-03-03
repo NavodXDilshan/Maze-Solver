@@ -369,6 +369,115 @@ function aldous_broder_algorithm()
 	}, 28);
 }
 
+function recursive_division() {
+    generating = true;
+    let timeouts = []; // Store timeouts for animation
+    let time = 0; // Time delay accumulator
+    const step = 28; // Delay between steps
+
+    // Step 1: Clear the grid and set up borders
+    clear_grid(); // Reset grid to an open state (all paths, no walls)
+    enclose(); // Add walls around the perimeter
+
+    // Step 2: Helper function to recursively divide the maze
+    function divide(x, y, width, height, orientation) {
+        if (width < 3 || height < 3) return; // Minimum size to allow division
+
+        let horizontal = orientation === 'horizontal';
+
+        // Choose a random position for the wall (on an even coordinate)
+        let wx = x + (horizontal ? 0 : random_int(1, width - 2));
+        let wy = y + (horizontal ? random_int(1, height - 2) : 0);
+        if (wx % 2 === 1) wx += 1; // Ensure wall is on an even coordinate
+        if (wy % 2 === 1) wy += 1;
+
+        // Choose a random position for the passage (on an odd coordinate)
+        let px = wx + (horizontal ? random_int(0, width - 1) : 0);
+        let py = wy + (horizontal ? 0 : random_int(0, height - 1));
+        if (px % 2 === 0) px = (px === 0 || px === grid.length - 1) ? px + 1 : px - 1; // Adjust to odd
+        if (py % 2 === 0) py = (py === 0 || py === grid[0].length - 1) ? py + 1 : py - 1;
+
+        // Draw the wall with animation, skipping the passage
+        let dx = horizontal ? 1 : 0;
+        let dy = horizontal ? 0 : 1;
+        let length = horizontal ? width : height;
+
+        for (let i = 0; i < length; i++) {
+            let wallX = wx + dx * i;
+            let wallY = wy + dy * i;
+            if ((wallX !== px || wallY !== py) && // Skip the passage
+                wallX >= 0 && wallX < grid.length && wallY >= 0 && wallY < grid[0].length) {
+                time += step;
+                timeouts.push(setTimeout(() => {
+                    add_wall(wallX, wallY); // Add wall with delay
+                    place_to_cell(wallX, wallY).classList.add("wall"); // Visual feedback
+                }, time));
+            }
+        }
+
+        // Recursively divide the sub-areas
+        if (horizontal) {
+            divide(x, y, width, wy - y, choose_orientation(wy - y, width));
+            divide(x, wy + 1, width, y + height - wy - 1, choose_orientation(y + height - wy - 1, width));
+        } else {
+            divide(x, y, wx - x, height, choose_orientation(height, wx - x));
+            divide(wx + 1, y, x + width - wx - 1, height, choose_orientation(height, x + width - wx - 1));
+        }
+    }
+
+    // Step 3: Helper function to choose orientation
+    function choose_orientation(height, width) {
+        if (height < width) return 'vertical';
+        else if (width < height) return 'horizontal';
+        else return random_int(0, 2) === 0 ? 'horizontal' : 'vertical';
+    }
+
+    // Step 4: Start the recursive division
+    divide(1, 1, grid.length - 2, grid[0].length - 2, choose_orientation(grid.length - 2, grid[0].length - 2));
+
+    // Step 5: Mark generation as complete and ensure start/target are clear
+    timeouts.push(setTimeout(() => {
+        generating = false;
+        // Ensure start and target are clear and connected
+        remove_wall(start_pos[0], start_pos[1]);
+        remove_wall(target_pos[0], target_pos[1]);
+        place_to_cell(start_pos[0], start_pos[1]).classList.add("start");
+        place_to_cell(target_pos[0], target_pos[1]).classList.add("target");
+
+        // Validate connectivity
+        ensure_connectivity();
+    }, time + step));
+}
+
+// Optional: Function to ensure start and target are connected
+function ensure_connectivity() {
+    // Use BFS to validate connectivity
+    let visited = new Array(grid.length).fill(false).map(() => new Array(grid[0].length).fill(false));
+    let queue = [start_pos];
+
+    while (queue.length > 0) {
+        let [x, y] = queue.shift();
+        if (visited[x][y]) continue;
+        visited[x][y] = true;
+
+        // Check neighbors
+        let neighbors = get_neighbours([x, y], 1);
+        for (let [nx, ny] of neighbors) {
+            if (!visited[nx][ny] && get_node(nx, ny) >= 0) { // Path exists if not a wall
+                queue.push([nx, ny]);
+            }
+        }
+    }
+
+    // If target is not visited, clear a path
+    if (!visited[target_pos[0]][target_pos[1]]) {
+        let clearX = Math.floor((start_pos[0] + target_pos[0]) / 2);
+        let clearY = Math.floor((start_pos[1] + target_pos[1]) / 2);
+        remove_wall(clearX, clearY);
+        place_to_cell(clearX, clearY).classList.remove("wall");
+    }
+}
+
 async function fetchMazeData() {
     try {
         const response = await fetch("/mazeData.json"); // Ensure maze.json is in the correct location
@@ -380,8 +489,8 @@ async function fetchMazeData() {
 }
 
 function input_image(mazeData) {
-    console.log(mazeData.height);
-	let initial_max_grid_size = mazeData.height;
+    // console.log(mazeData.height);
+	// let initial_max_grid_size = mazeData.height;
     let grid = mazeData.grid;
     let width = mazeData.width;
     let height = mazeData.height;
@@ -425,6 +534,8 @@ function input_image(mazeData) {
         generating = false;  // Set 'generating' to false to indicate the process is finished
         timeouts = [];       // Clear timeouts array
     }, time));
+
+	// console.log(start_pos);
 }
 
 
@@ -435,7 +546,7 @@ function input_image(mazeData) {
 function maze_generators()
 {
 	let start_temp = start_pos;
-	console.log(start_temp);
+	// console.log(start_temp);
 	let target_temp = target_pos;
 	hidden_clear();
 	generating = true;
@@ -500,8 +611,9 @@ function maze_generators()
 		recursive_division();
 
 	else if (document.querySelector("#slct_2").value == "7"){
-		// place_to_cell(start_pos[0], start_pos[1]).classList.remove("start");
-		// place_to_cell(target_pos[0], target_pos[1]).classList.remove("target");
+		// place_to_cell(cell_to_place(start_pos)).classList.remove("start");
+		// place_to_cell(cell_to_place(target_pos)).classList.remove("target");
+		
 		clear_grid();
 		hidden_clear_vision();
 		fetchMazeData();

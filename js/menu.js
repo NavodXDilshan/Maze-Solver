@@ -1,4 +1,6 @@
 "use strict";
+let timerInterval = null; // To store the interval ID for the timer
+let startTime = null; // To store the start time when "Play" is pressed
 
 function hidden_clear()
 {
@@ -16,6 +18,7 @@ function hidden_clear()
 		init_css_properties_after();
 		visualizer_event_listeners();
 	}
+	resetTimer();
 }
 
 function hidden_clear_vision()
@@ -34,12 +37,39 @@ function hidden_clear_vision()
 		init_css_properties_after();
 		visualizer_event_listeners();
 	}
+	resetTimer();
 }
 
 function clear()
 {
 	document.querySelector("#slct_2").value = "0";
 	hidden_clear();
+}
+
+function startTimer() {
+    if (timerInterval) clearInterval(timerInterval); // Clear any existing timer
+    startTime = Date.now(); // Record start time
+    timerInterval = setInterval(updateTimer, 10); // Update every 10ms for precision
+}
+
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        updateTimer(); // Final update to show exact time
+    }
+}
+
+function resetTimer() {
+    stopTimer();
+    startTime = null;
+    document.querySelector("#timer_value").textContent = "0.00s";
+}
+
+function updateTimer() {
+    if (startTime === null) return;
+    const elapsed = (Date.now() - startTime) / 1000; // Convert to seconds
+    document.querySelector("#timer_value").textContent = elapsed.toFixed(2) + "s";
 }
 
 function menu_event_listeners()
@@ -70,6 +100,19 @@ function menu_event_listeners()
 
 		generating = false;
 		clear_grid();
-		maze_solvers();
+		startTimer(); // Start the timer when "Play" is pressed
+        maze_solvers(); // Assume this function solves the maze
 	});
+
+	
 }
+
+// Function to call when maze is solved (to be triggered from maze_solvers.js)
+function onMazeSolved() {
+    stopTimer(); // Stop the timer when the maze is solved
+}
+
+// Add DOMContentLoaded listener if not already present elsewhere
+document.addEventListener("DOMContentLoaded", function () {
+    menu_event_listeners();
+});
