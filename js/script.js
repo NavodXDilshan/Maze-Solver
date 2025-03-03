@@ -29,3 +29,35 @@ window.onload = function()
 
 	document.querySelector("#hider").style.visibility= "hidden";
 }
+
+document.getElementById('upload_button').addEventListener('click', function() {
+    const fileInput = document.getElementById('maze_image');
+    const file = fileInput.files[0];
+    
+    if (file) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                // Here you can process the image and convert it to a maze
+                // This is a placeholder for your image processing logic
+                console.log('Image loaded successfully');
+                console.log('Width:', img.width, 'Height:', img.height);
+                
+                // You might want to:
+                // 1. Convert the image to a maze grid
+                // 2. Update the visualizer
+                // 3. Set the maze generation algorithm to "Input From Image" (value 7)
+                document.getElementById('slct_2').value = "7";
+                
+                // Add your image-to-maze conversion logic here
+            };
+            img.src = e.target.result;
+        };
+        
+        reader.readAsDataURL(file);
+    } else {
+        alert('Please select an image file first!');
+    }
+});
