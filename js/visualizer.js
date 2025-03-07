@@ -10,8 +10,9 @@ function set_grid_properties()
 		grid_size_y = initial_max_grid_size;
 		// grid_size_y = Math.floor(initial_max_grid_size / ratio);
 
-		// if (grid_size_y % 2 == 0)
-		// 	grid_size_y += 1;
+		if (grid_size_y % 2 == 0){
+			grid_size_x += 1;
+			grid_size_y += 1;}
 
 		cell_size = Math.floor(window.innerHeight / initial_max_grid_size);
 		// cell_size = Math.floor((window.innerWidth - menu_width) / initial_max_grid_size);

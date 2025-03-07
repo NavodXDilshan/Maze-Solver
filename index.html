@@ -33,14 +33,14 @@
 
 			<br><br>
 
-			<div class="choice" id="choice_1">
-				<span class="choice_label" id="choice_label_1">Maze solving algorithm</span>
-				<label class="select" for="slct_1">
-					<select id="slct_1" required="required">
-						<option selected value="1">Breadth-First</option>
-						<option value="2">Depth First Search</option>
-						<option value="4">Dijkstra</option>
-						<option value="5">A*</option>
+			<!-- Maze Size (First) -->
+			<div class="choice" id="choice_3">
+				<span class="choice_label" id="choice_label_3">Maze Size</span>
+				<label class="select" for="slct_3">
+					<select id="slct_3" required="required">
+						<option selected value="1">9 x 9</option>
+						<option value="2">16 x 16</option>
+						<option value="3">21 x 21</option>
 					</select>
 					<svg>
 						<use xlink:href="#select-arrow-down"></use>
@@ -48,8 +48,9 @@
 				</label>
 			</div>
 
+			<!-- Maze Generation Algorithm (Second) -->
 			<div class="choice" id="choice_2">
-				<span class="choice_label" id="choice_label_2">Maze generation algorithm</span>
+				<span class="choice_label" id="choice_label_2">Maze Generation Algorithm</span>
 				<label class="select" for="slct_2">
 					<select id="slct_2" required="required">
 						<option hidden selected value="0">Custom</option>
@@ -64,13 +65,15 @@
 				</label>
 			</div>
 
-			<div class="choice" id="choice_3">
-				<span class="choice_label" id="choice_label_3">Maze Size</span>
-				<label class="select" for="slct_3">
-					<select id="slct_3" required="required">
-						<option selected value="1">9 x 9</option>
-						<option value="2">16 x 16</option>
-						<option value="3">21 x 21</option>
+			<!-- Maze Solving Algorithm (Third) -->
+			<div class="choice" id="choice_1">
+				<span class="choice_label" id="choice_label_1">Maze Solving Algorithm</span>
+				<label class="select" for="slct_1">
+					<select id="slct_1" required="required">
+						<option selected value="1">Breadth-First</option>
+						<option value="2">Depth First Search</option>
+						<option value="4">Dijkstra</option>
+						<option value="5">A*</option>
 					</select>
 					<svg>
 						<use xlink:href="#select-arrow-down"></use>
@@ -95,7 +98,7 @@
 				<button class="my_button" id="play">Play</button>
 			</div>
 
-			<!-- Add Timer Display -->
+			<!-- Timer Display -->
 			<div id="timer_display">
 				<span id="timer_label">Time: </span>
 				<span id="timer_value">0.00s</span>
