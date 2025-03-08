@@ -9,6 +9,168 @@ import os
 app = Flask(__name__)
 CORS(app) # Enable CORS for all routes
 
+import cv2
+import numpy as np
+
+def process_maze_image(image_path):
+    # Read the image
+    img = cv2.imread(image_path)
+    if img is None:
+        raise ValueError(f"Could not read image at {image_path}")
+    
+    # Convert to grayscale
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    
+    # Threshold to create binary image (walls vs paths)
+    _, binary = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+    
+    # Get image dimensions
+    height, width = binary.shape
+    
+    # IMPROVED GRID DETECTION
+    # Detect transitions in middle row/column
+    mid_y = height // 2
+    mid_x = width // 2
+    
+    horizontal_scan = binary[mid_y, :]
+    vertical_scan = binary[:, mid_x]
+    
+    h_transitions = np.where(np.diff(horizontal_scan) != 0)[0]
+    v_transitions = np.where(np.diff(vertical_scan) != 0)[0]
+    
+    cell_size = None
+    # Try to calculate cell size from transitions
+    if len(h_transitions) > 1 and len(v_transitions) > 1:
+        h_diffs = np.diff(h_transitions)
+        v_diffs = np.diff(v_transitions)
+        cell_width = np.median(h_diffs)
+        cell_height = np.median(v_diffs)
+        
+        if 0.8 < cell_width / cell_height < 1.2:
+            cell_size = int((cell_width + cell_height) / 2)
+        else:
+            cell_size = int(min(cell_width, cell_height))
+    
+    # If cell_size couldn't be determined from transitions
+    if cell_size is None:
+        possible_sizes = [9, 16, 21]
+        best_error = float('inf')
+        best_size = 21  # Default fallback
+        
+        for size in possible_sizes:
+            cs_w = width // size
+            cs_h = height // size
+            error = abs(width - cs_w * size) + abs(height - cs_h * size)
+            if error < best_error:
+                best_error = error
+                best_size = size
+        
+        cell_size = min(width, height) // best_size
+        cols_raw = width // cell_size
+        rows_raw = height // cell_size
+        grid_size = best_size
+    else:
+        # Calculate grid size candidates
+        cols_raw = width // cell_size
+        rows_raw = height // cell_size
+        grid_size_candidate = min(cols_raw, rows_raw)
+        
+        # Find closest standard size
+        possible_sizes = [9, 16, 21]
+        grid_size = min(possible_sizes, key=lambda x: abs(x - grid_size_candidate))
+    
+    # Ensure we don't get invalid grid sizes
+    grid_size = max(9, min(grid_size, 21))
+    
+    # Create grid
+    maze = np.zeros((grid_size, grid_size), dtype=int)
+    
+    # Sample each cell's center
+    for i in range(grid_size):
+        for j in range(grid_size):
+            center_y = int((i + 0.5) * (height / grid_size))
+            center_x = int((j + 0.5) * (width / grid_size))
+            if 0 <= center_y < height and 0 <= center_x < width:
+                maze[i, j] = 0 if binary[center_y, center_x] < 127 else 1
+    
+    # Color detection (unchanged)
+    # ... [rest of the original color detection code] ...
+    # Find start point (green marker)
+    start_point = None
+    # Convert to HSV for better color detection
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    # Green color range
+    lower_green = np.array([40, 40, 40])
+    upper_green = np.array([80, 255, 255])
+    green_mask = cv2.inRange(hsv, lower_green, upper_green)
+    green_pixels = np.where(green_mask > 0)
+    
+    if len(green_pixels[0]) > 0:
+        # Find the average position of green pixels
+        avg_y = int(np.mean(green_pixels[0]))
+        avg_x = int(np.mean(green_pixels[1]))
+        
+        # Map to grid coordinates
+        start_i = avg_y // cell_size
+        start_j = avg_x // cell_size
+        
+        # Validate grid position
+        if 0 <= start_i < grid_size and 0 <= start_j < grid_size:
+            start_point = [start_i, start_j]
+    
+    # Find end point (red marker)
+    end_point = None
+    # Red color range in HSV
+    lower_red1 = np.array([0, 100, 100])
+    upper_red1 = np.array([10, 255, 255])
+    lower_red2 = np.array([160, 100, 100])
+    upper_red2 = np.array([180, 255, 255])
+    
+    red_mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
+    red_mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
+    red_mask = cv2.bitwise_or(red_mask1, red_mask2)
+    
+    red_pixels = np.where(red_mask > 0)
+    
+    if len(red_pixels[0]) > 0:
+        # Find the average position of red pixels
+        avg_y = int(np.mean(red_pixels[0]))
+        avg_x = int(np.mean(red_pixels[1]))
+        
+        # Map to grid coordinates
+        end_i = avg_y // cell_size
+        end_j = avg_x // cell_size
+        
+        # Validate grid position
+        if 0 <= end_i < grid_size and 0 <= end_j < grid_size:
+            end_point = [end_i, end_j]
+    
+    # Convert grid to list of strings as required
+    grid_strings = []
+    for row in maze:
+        grid_strings.append(''.join(map(str, row)))
+
+    # Convert grid to strings
+    grid_strings = [''.join(map(str, row)) for row in maze]
+
+    # Create JSON structure
+    maze_json = {
+        "width": grid_size,
+        "height": grid_size,
+        "grid": grid_strings
+    }
+
+    # Add start/end points if detected
+    # ... [rest of the original start/end detection code] ...
+    if start_point:
+        maze_json["start"] = start_point
+    
+    if end_point:
+        maze_json["end"] = end_point
+    
+
+    return maze_json
+
 def process_maze_image(image_path):
     # Read the image
     img = cv2.imread(image_path)
