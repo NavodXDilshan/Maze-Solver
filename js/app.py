@@ -7,7 +7,7 @@ import tempfile
 import os
 
 app = Flask(__name__)
-CORS(app) # Enable CORS for all routes
+CORS(app) 
 
 import cv2
 import numpy as np
@@ -21,13 +21,12 @@ def process_maze_image(image_path):
     # Convert to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     
-    # Threshold to create binary image (walls vs paths)
+    # Threshold to create binary image 
     _, binary = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
     
     # Get image dimensions
     height, width = binary.shape
     
-    # IMPROVED GRID DETECTION
     # Detect transitions in middle row/column
     mid_y = height // 2
     mid_x = width // 2
@@ -55,7 +54,7 @@ def process_maze_image(image_path):
     if cell_size is None:
         possible_sizes = [9, 16, 21]
         best_error = float('inf')
-        best_size = 21  # Default fallback
+        best_size = 21  
         
         for size in possible_sizes:
             cs_w = width // size
@@ -93,8 +92,7 @@ def process_maze_image(image_path):
             if 0 <= center_y < height and 0 <= center_x < width:
                 maze[i, j] = 0 if binary[center_y, center_x] < 127 else 1
     
-    # Color detection (unchanged)
-    # ... [rest of the original color detection code] ...
+
     # Find start point (green marker)
     start_point = None
     # Convert to HSV for better color detection
@@ -161,7 +159,6 @@ def process_maze_image(image_path):
     }
 
     # Add start/end points if detected
-    # ... [rest of the original start/end detection code] ...
     if start_point:
         maze_json["start"] = start_point
     
@@ -186,9 +183,8 @@ def process_maze_image(image_path):
     # Get image dimensions
     height, width = binary.shape
     
-    # IMPROVED GRID DETECTION
+
     # Count the number of grid cells based on the image
-    # For this specific type of maze with clear grid lines
     
     # First, detect all white pixels (paths)
     white_pixels = np.where(binary == 255)
@@ -197,19 +193,7 @@ def process_maze_image(image_path):
     y_coords = white_pixels[0]
     x_coords = white_pixels[1]
     
-    # Count actual cells by analyzing the image directly
-    # We'll use the fact that the maze has clear grid cells
-    
-    # Sample pixels across the image to detect the grid pattern
-    # This is more robust than the previous approach
-    
-    # For this maze image, we can directly count grid cells
-    # by detecting transitions between wall and path
-    
-    # APPROACH: Scan horizontal and vertical lines to detect transitions
-    # For square mazes specifically (21x21)
-    
-    # First, let's scan the middle rows and columns to get the cell size
+
     mid_y = height // 2
     mid_x = width // 2
     
@@ -237,20 +221,14 @@ def process_maze_image(image_path):
             # If not square, use individual estimates
             cell_size = int(min(cell_width, cell_height))
     else:
-        # Fallback: estimate based on image size (assuming grid is 21x21)
-        # This is a better approach for this particular maze
         cell_size = min(width, height) // 21
     
-    # Calculate grid dimensions
-    # First calculate raw dimensions
     cols_raw = width // cell_size
     rows_raw = height // cell_size
     
-    # For square mazes, ensure equal dimensions by taking the minimum
-    # This prevents detecting an extra column or row
     grid_size = min(cols_raw, rows_raw)
     
-    # Make sure we get exactly a square grid (e.g., 21x21)
+    # Make sure we get exactly a square grid
     rows = grid_size
     cols = grid_size
     
@@ -260,14 +238,11 @@ def process_maze_image(image_path):
     # Sample each cell's center to determine if it's a wall or path
     for i in range(rows):
         for j in range(cols):
-            # Calculate center coordinates, ensuring we stay within the detected grid
-            # Use the center of the cell for more accurate sampling
             center_y = int((i + 0.5) * cell_size)
             center_x = int((j + 0.5) * cell_size)
             
-            # Check if center coordinates are within bounds
             if 0 <= center_y < height and 0 <= center_x < width:
-                if binary[center_y, center_x] < 127:  # Path is white
+                if binary[center_y, center_x] < 127:  
                     maze[i, j] = 1
     
     # Find start point (green marker)

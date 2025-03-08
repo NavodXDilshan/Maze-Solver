@@ -233,29 +233,29 @@ function recursive_division() {
     let time = 0; // Time delay accumulator
     const step = 28; // Delay between steps
 
-    // Step 1: Clear the grid and set up borders
-    clear_grid(); // Reset grid to an open state (all paths, no walls)
-    enclose(); // Add walls around the perimeter
+  
+    clear_grid(); 
+    enclose(); 
 
-    // Step 2: Helper function to recursively divide the maze
+
     function divide(x, y, width, height, orientation) {
-        if (width < 3 || height < 3) return; // Minimum size to allow division
+        if (width < 3 || height < 3) return;
 
         let horizontal = orientation === 'horizontal';
 
-        // Choose a random position for the wall (on an even coordinate)
+        
         let wx = x + (horizontal ? 0 : random_int(1, width - 2));
         let wy = y + (horizontal ? random_int(1, height - 2) : 0);
-        if (wx % 2 === 1) wx += 1; // Ensure wall is on an even coordinate
+        if (wx % 2 === 1) wx += 1; 
         if (wy % 2 === 1) wy += 1;
 
-        // Choose a random position for the passage (on an odd coordinate)
+       
         let px = wx + (horizontal ? random_int(0, width - 1) : 0);
         let py = wy + (horizontal ? 0 : random_int(0, height - 1));
-        if (px % 2 === 0) px = (px === 0 || px === grid.length - 1) ? px + 1 : px - 1; // Adjust to odd
+        if (px % 2 === 0) px = (px === 0 || px === grid.length - 1) ? px + 1 : px - 1; 
         if (py % 2 === 0) py = (py === 0 || py === grid[0].length - 1) ? py + 1 : py - 1;
 
-        // Draw the wall with animation, skipping the passage
+       
         let dx = horizontal ? 1 : 0;
         let dy = horizontal ? 0 : 1;
         let length = horizontal ? width : height;
@@ -263,12 +263,12 @@ function recursive_division() {
         for (let i = 0; i < length; i++) {
             let wallX = wx + dx * i;
             let wallY = wy + dy * i;
-            if ((wallX !== px || wallY !== py) && // Skip the passage
+            if ((wallX !== px || wallY !== py) && 
                 wallX >= 0 && wallX < grid.length && wallY >= 0 && wallY < grid[0].length) {
                 time += step;
                 timeouts.push(setTimeout(() => {
                     add_wall(wallX, wallY); // Add wall with delay
-                    place_to_cell(wallX, wallY).classList.add("wall"); // Visual feedback
+                    place_to_cell(wallX, wallY).classList.add("wall"); ck
                 }, time));
             }
         }
@@ -283,33 +283,33 @@ function recursive_division() {
         }
     }
 
-    // Step 3: Helper function to choose orientation
+  
     function choose_orientation(height, width) {
         if (height < width) return 'vertical';
         else if (width < height) return 'horizontal';
         else return random_int(0, 2) === 0 ? 'horizontal' : 'vertical';
     }
 
-    // Step 4: Start the recursive division
+  
     divide(1, 1, grid.length - 2, grid[0].length - 2, choose_orientation(grid.length - 2, grid[0].length - 2));
 
-    // Step 5: Mark generation as complete and ensure start/target are clear
+ 
     timeouts.push(setTimeout(() => {
         generating = false;
-        // Ensure start and target are clear and connected
+    
         remove_wall(start_pos[0], start_pos[1]);
         remove_wall(target_pos[0], target_pos[1]);
         place_to_cell(start_pos[0], start_pos[1]).classList.add("start");
         place_to_cell(target_pos[0], target_pos[1]).classList.add("target");
 
-        // Validate connectivity
+     
         ensure_connectivity();
     }, time + step));
 }
 
-// Optional: Function to ensure start and target are connected
+
 function ensure_connectivity() {
-    // Use BFS to validate connectivity
+ 
     let visited = new Array(grid.length).fill(false).map(() => new Array(grid[0].length).fill(false));
     let queue = [start_pos];
 
@@ -321,7 +321,7 @@ function ensure_connectivity() {
         // Check neighbors
         let neighbors = get_neighbours([x, y], 1);
         for (let [nx, ny] of neighbors) {
-            if (!visited[nx][ny] && get_node(nx, ny) >= 0) { // Path exists if not a wall
+            if (!visited[nx][ny] && get_node(nx, ny) >= 0) { 
                 queue.push([nx, ny]);
             }
         }
@@ -338,7 +338,7 @@ function ensure_connectivity() {
 
 async function fetchMazeData() {
     try {
-        const response = await fetch("/mazeData.json"); // Ensure maze.json is in the correct location
+        const response = await fetch("/mazeData.json"); 
         const mazeData = await response.json();
         input_image(mazeData);
     } catch (error) {
@@ -351,42 +351,41 @@ function input_image(mazeData) {
     let grid = mazeData.grid;
     let width = mazeData.width;
     let height = mazeData.height;
-    let new_start_pos = mazeData.start;  // e.g., [1, 5] means row 1, column 5
-    let new_target_pos = mazeData.end;   // e.g., [19, 14] means row 19, column 14
+    let new_start_pos = mazeData.start;  
+    let new_target_pos = mazeData.end;   
 
     let time = 0;
     let step = 17;
     let timeouts = [];
 
-    // Clear the entire grid first to start with a clean slate (all paths)
+    
     clear_grid();
 
-    // Clear existing start and target markers from their old positions
+  
     if (start_pos) {
-        place_to_cell(start_pos[1], start_pos[0]).classList.remove("start");  // [col, row]
+        place_to_cell(start_pos[1], start_pos[0]).classList.remove("start");  
     }
     if (target_pos) {
-        place_to_cell(target_pos[1], target_pos[0]).classList.remove("target");  // [col, row]
+        place_to_cell(target_pos[1], target_pos[0]).classList.remove("target");  
     }
 
-    // Update global start_pos and target_pos with new values from JSON
-    start_pos = new_start_pos ? [...new_start_pos] : start_pos;  // [row, col]
+ 
+    start_pos = new_start_pos ? [...new_start_pos] : start_pos;  
     target_pos = new_target_pos ? [...new_target_pos] : target_pos;
 
-    // Add new start and target markers at the correct positions
-    // place_to_cell(x, y) expects x = column, y = row, so swap [row, col] to [col, row]
-    place_to_cell(start_pos[1], start_pos[0]).classList.add("start");  // [col, row]
-    place_to_cell(target_pos[1], target_pos[0]).classList.add("target");  // [col, row]
+
+    place_to_cell(start_pos[1], start_pos[0]).classList.add("start");  
+    place_to_cell(target_pos[1], target_pos[0]).classList.add("target");  
 
     // Function to add walls from the JSON data
     function add_walls_from_json() {
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
-                if (grid[y][x] === '1') {  // '0' represents walls, '1' represents paths
+                if (grid[y][x] === '1') {  
                     time += step;
                     timeouts.push(setTimeout(function () { 
-                        add_wall(x, y);  // x = col, y = row
-                        place_to_cell(x, y).classList.add("wall");  // Visual feedback
+                        add_wall(x, y); 
+                        place_to_cell(x, y).classList.add("wall");  
                     }, time));
                 }
             }
@@ -396,10 +395,10 @@ function input_image(mazeData) {
     // Start adding walls from the grid
     add_walls_from_json();
 
-    // Ensure start and target positions are paths (override any walls)
+ 
     timeouts.push(setTimeout(function () {
-        remove_wall(start_pos[1], start_pos[0]);  // [col, row]
-        remove_wall(target_pos[1], target_pos[0]);  // [col, row]
+        remove_wall(start_pos[1], start_pos[0]);  
+        remove_wall(target_pos[1], target_pos[0]);  
         place_to_cell(start_pos[1], start_pos[0]).classList.remove("wall");
         place_to_cell(target_pos[1], target_pos[0]).classList.remove("wall");
         place_to_cell(start_pos[1], start_pos[0]).classList.add("start");
@@ -417,14 +416,13 @@ function input_image(mazeData) {
 }
 
 
-// Call function to load and process the JSON maze data
+
 
 
 
 function maze_generators()
 {
 	let start_temp = start_pos;
-	// console.log(start_temp);
 	let target_temp = target_pos;
 	hidden_clear();
 	generating = true;
@@ -483,11 +481,7 @@ function maze_generators()
 		recursive_division();
 
 	else if (document.querySelector("#slct_2").value == "7"){
-		// place_to_cell(cell_to_place(start_pos)).classList.remove("start");
-		// place_to_cell(cell_to_place(target_pos)).classList.remove("target");
-		
 		clear_grid();
 		hidden_clear_vision();
-		fetchMazeData();
-		input_image();}
+		fetchMazeData();}
 }

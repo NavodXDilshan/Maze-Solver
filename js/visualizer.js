@@ -6,14 +6,14 @@ function set_grid_properties() {
     if (ratio > 1) {
         grid_size_x = initial_max_grid_size;
         grid_size_y = initial_max_grid_size;
-        // Ensure odd size
+      
         if (grid_size_x % 2 === 0) grid_size_x += 1;
         if (grid_size_y % 2 === 0) grid_size_y += 1;
         cell_size = Math.floor(window.innerHeight / initial_max_grid_size);
     } else {
         grid_size_x = initial_max_grid_size;
         grid_size_y = initial_max_grid_size;
-        // Ensure odd size
+        
         if (grid_size_x % 2 === 0) grid_size_x += 1;
         if (grid_size_y % 2 === 0) grid_size_y += 1;
         cell_size = Math.floor((window.innerWidth - menu_width) / initial_max_grid_size);
