@@ -347,38 +347,47 @@ async function fetchMazeData() {
 }
 
 function input_image(mazeData) {
-    // console.log(mazeData.height);
-	// let initial_max_grid_size = mazeData.height;
+    // Extract data from mazeData
     let grid = mazeData.grid;
     let width = mazeData.width;
     let height = mazeData.height;
-    let start_pos = mazeData.start;  // Start position [x, y]
-    let target_pos = mazeData.end;   // Target position [x, y]
+    let new_start_pos = mazeData.start;  // e.g., [1, 5] means row 1, column 5
+    let new_target_pos = mazeData.end;   // e.g., [19, 14] means row 19, column 14
 
     let time = 0;
     let step = 17;
     let timeouts = [];
 
-    // Add start and target markers, assuming place_to_cell() returns a DOM element:
-    // Uncomment these lines if you need to mark the start and target positions in the DOM
-    // place_to_cell(start[0], start[1]).classList.add("start");
-    // place_to_cell(target[0], target[1]).classList.add("target");
-	// place_to_cell(start_pos[0], start_pos[1]).classList.remove("start");
-	place_to_cell(start_pos[0], start_pos[0]).classList.add("start");
-	// place_to_cell(target_pos[0], target_pos[1]).classList.remove("target");
-	place_to_cell(target_pos[0], target_pos[0]).classList.add("target");
+    // Clear the entire grid first to start with a clean slate (all paths)
+    clear_grid();
+
+    // Clear existing start and target markers from their old positions
+    if (start_pos) {
+        place_to_cell(start_pos[1], start_pos[0]).classList.remove("start");  // [col, row]
+    }
+    if (target_pos) {
+        place_to_cell(target_pos[1], target_pos[0]).classList.remove("target");  // [col, row]
+    }
+
+    // Update global start_pos and target_pos with new values from JSON
+    start_pos = new_start_pos ? [...new_start_pos] : start_pos;  // [row, col]
+    target_pos = new_target_pos ? [...new_target_pos] : target_pos;
+
+    // Add new start and target markers at the correct positions
+    // place_to_cell(x, y) expects x = column, y = row, so swap [row, col] to [col, row]
+    place_to_cell(start_pos[1], start_pos[0]).classList.add("start");  // [col, row]
+    place_to_cell(target_pos[1], target_pos[0]).classList.add("target");  // [col, row]
+
     // Function to add walls from the JSON data
     function add_walls_from_json() {
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
-                if (grid[y][x] === '1') {  // Wall is represented by '1'
-					console.log(grid[y[x]])
+                if (grid[y][x] === '1') {  // '0' represents walls, '1' represents paths
                     time += step;
-                    // Delay the wall addition by using setTimeout
                     timeouts.push(setTimeout(function () { 
-                        add_wall(x, y); 
+                        add_wall(x, y);  // x = col, y = row
+                        place_to_cell(x, y).classList.add("wall");  // Visual feedback
                     }, time));
-					// cell.classList.add("cell_wall");
                 }
             }
         }
@@ -387,13 +396,24 @@ function input_image(mazeData) {
     // Start adding walls from the grid
     add_walls_from_json();
 
+    // Ensure start and target positions are paths (override any walls)
+    timeouts.push(setTimeout(function () {
+        remove_wall(start_pos[1], start_pos[0]);  // [col, row]
+        remove_wall(target_pos[1], target_pos[0]);  // [col, row]
+        place_to_cell(start_pos[1], start_pos[0]).classList.remove("wall");
+        place_to_cell(target_pos[1], target_pos[0]).classList.remove("wall");
+        place_to_cell(start_pos[1], start_pos[0]).classList.add("start");
+        place_to_cell(target_pos[1], target_pos[0]).classList.add("target");
+    }, time + step));
+
     // After all walls are added, mark generation as complete
     timeouts.push(setTimeout(function () {
-        generating = false;  // Set 'generating' to false to indicate the process is finished
-        timeouts = [];       // Clear timeouts array
-    }, time));
+        generating = false;
+        timeouts = [];
+    }, time + step * 2));
 
-	// console.log(start_pos);
+    console.log("Updated start_pos (row, col):", start_pos);
+    console.log("Updated target_pos (row, col):", target_pos);
 }
 
 

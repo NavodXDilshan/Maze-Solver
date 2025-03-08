@@ -1,35 +1,25 @@
 "use strict";
 
-function set_grid_properties()
-{
-	let ratio = (window.innerWidth - menu_width) / window.innerHeight;
+function set_grid_properties() {
+    let ratio = (window.innerWidth - menu_width) / window.innerHeight;
 
-	if (ratio > 1)
-	{
-		grid_size_x = initial_max_grid_size;
-		grid_size_y = initial_max_grid_size;
-		// grid_size_y = Math.floor(initial_max_grid_size / ratio);
+    if (ratio > 1) {
+        grid_size_x = initial_max_grid_size;
+        grid_size_y = initial_max_grid_size;
+        // Ensure odd size
+        if (grid_size_x % 2 === 0) grid_size_x += 1;
+        if (grid_size_y % 2 === 0) grid_size_y += 1;
+        cell_size = Math.floor(window.innerHeight / initial_max_grid_size);
+    } else {
+        grid_size_x = initial_max_grid_size;
+        grid_size_y = initial_max_grid_size;
+        // Ensure odd size
+        if (grid_size_x % 2 === 0) grid_size_x += 1;
+        if (grid_size_y % 2 === 0) grid_size_y += 1;
+        cell_size = Math.floor((window.innerWidth - menu_width) / initial_max_grid_size);
+    }
 
-		if (grid_size_y % 2 == 0){
-			grid_size_x += 1;
-			grid_size_y += 1;}
-
-		cell_size = Math.floor(window.innerHeight / initial_max_grid_size);
-		// cell_size = Math.floor((window.innerWidth - menu_width) / initial_max_grid_size);
-	}
-
-	else
-	{
-		// grid_size_x = Math.floor(initial_max_grid_size * ratio);
-		grid_size_x = initial_max_grid_size;
-		grid_size_y = initial_max_grid_size;
-
-		if (grid_size_x % 2 == 0)
-			grid_size_x += 1;
-
-		cell_size = Math.floor((window.innerWidth - menu_width) / initial_max_grid_size);
-		// cell_size = Math.floor(window.innerHeight / initial_max_grid_size);
-	}
+    console.log("Grid size set to (x, y):", grid_size_x, grid_size_y);
 }
 
 function generate_grid()
