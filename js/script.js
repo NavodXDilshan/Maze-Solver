@@ -27,33 +27,36 @@ window.onload = function()
 	visualizer_event_listeners();
 	menu_event_listeners();
 
+    document.getElementById('upload_button').addEventListener('click', function() {
+        console.log('Upload button clicked');
+        const fileInput = document.getElementById('maze_image');
+        const file = fileInput.files[0];
+        
+        if (file) {
+            const formData = new FormData();
+            formData.append('file', file);
+    
+            // Send the image to the Flask backend
+            fetch('http://127.0.0.1:5000/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Server response:', data);
+                // Update the maze generation algorithm dropdown
+                document.getElementById('slct_2').value = "7";
+                // Optionally, update the visualizer with the processed maze
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        } else {
+            alert('Please select an image file first!');
+        }
+    });
+
 	document.querySelector("#hider").style.visibility= "hidden";
 }
 
-document.getElementById('upload_button').addEventListener('click', function() {
-    const fileInput = document.getElementById('maze_image');
-    const file = fileInput.files[0];
-    
-    if (file) {
-        const formData = new FormData();
-        formData.append('image', file);
 
-        // Send the image to the Flask backend
-        fetch('http://127.0.0.1:5000/upload', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Server response:', data);
-            // Update the maze generation algorithm dropdown
-            document.getElementById('slct_2').value = "7";
-            // Optionally, update the visualizer with the processed maze
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-    } else {
-        alert('Please select an image file first!');
-    }
-});
