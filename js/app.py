@@ -360,7 +360,7 @@ def process_maze():
         maze_json = process_maze_image(temp_file_path)
 
         # Write to mazeData.json
-        with open('mazeData.json', 'w') as f:
+        with open('../mazeData.json', 'w') as f:
             json.dump(maze_json, f, indent=4)
         
         # Clean up the temporary file
