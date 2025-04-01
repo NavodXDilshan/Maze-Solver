@@ -12,13 +12,41 @@ function get_neighbours(cell, distance) {
     return [up, right, down, left];
 }
 
-const cellSize = 30; // Must match the cellSize in canvas_recursive_backtracking
+function canMove(fromX, fromY, toX, toY) {
+    // Boundary check
+    if (toX < 0 || toX >= grid.length || toY < 0 || toY >= grid[0].length) {
+        return false;
+    }
 
+    const isCanvasMode = mazeCanvas && mazeCtx;
+    if (isCanvasMode) {
+        // Prevent revisiting cells
+        if (grid[toX][toY] !== 0) {
+            return false;
+        }
+        // Check walls
+        if (toX === fromX + 1 && toY === fromY) { // Moving right
+            return !verticalWalls[fromY][fromX];
+        } else if (toX === fromX - 1 && toY === fromY) { // Moving left
+            return !verticalWalls[fromY][toX];
+        } else if (toY === fromY + 1 && toX === fromX) { // Moving down
+            return !horizontalWalls[fromY][fromX];
+        } else if (toY === fromY - 1 && toX === fromX) { // Moving up
+            return !horizontalWalls[toY][fromX];
+        }
+        return false;
+    } else {
+        // Table mode: already checks unvisited paths
+        return get_node(toX, toY) === 0;
+    }
+}
+
+const cellSize = 30; // Must match canvas_recursive_backtracking
 function maze_solvers_interval() {
     my_interval = window.setInterval(function() {
         const isCanvasMode = mazeCanvas && mazeCtx;
-        const cellWidth = isCanvasMode ? mazeCanvas.width / grid_size_x : 30;
-        const cellHeight = isCanvasMode ? mazeCanvas.height / grid_size_y : 30;
+        const cellWidth = isCanvasMode ? mazeCanvas.width / grid_size_x : cellSize;
+        const cellHeight = isCanvasMode ? mazeCanvas.height / grid_size_y : cellSize;
 
         if (!path) {
             const currentNode = node_list[node_list_index];
@@ -92,7 +120,7 @@ function maze_solvers_interval() {
             }
             path_list_index++;
         }
-    }, 50);
+    }, 30);
 }
 
 function breadth_first() {
@@ -103,43 +131,42 @@ function breadth_first() {
     found = false;
     path = false;
     let frontier = [start_pos];
-    console.log("Starting Breadth-First Search from:", start_pos);
     grid[start_pos[0]][start_pos[1]] = 1;
 
     do {
-        let list = get_neighbours(frontier[0], 1);
+        let current_cell = frontier[0];
+        let list = get_neighbours(current_cell, 1);
         frontier.splice(0, 1);
 
-        for (let i = 0; i < list.length; i++)
-            if (get_node(list[i][0], list[i][1]) == 0) {
-                frontier.push(list[i]);
-                grid[list[i][0]][list[i][1]] = i + 1;
+        for (let i = 0; i < list.length; i++) {
+            let neighbor = list[i];
+            if (canMove(current_cell[0], current_cell[1], neighbor[0], neighbor[1])) {
+                frontier.push(neighbor);
+                grid[neighbor[0]][neighbor[1]] = i + 1;
 
-                if (list[i][0] == target_pos[0] && list[i][1] == target_pos[1]) {
+                if (neighbor[0] === target_pos[0] && neighbor[1] === target_pos[1]) {
                     found = true;
                     break;
                 }
 
-                node_list.push(list[i]);
+                node_list.push(neighbor);
+;
             }
+        }
     } while (frontier.length > 0 && !found);
 
     if (found) {
         let current_node = target_pos;
-
-        while (current_node[0] != start_pos[0] || current_node[1] != start_pos[1]) {
+        while (current_node[0] !== start_pos[0] || current_node[1] !== start_pos[1]) {
             switch (grid[current_node[0]][current_node[1]]) {
-                case 1: current_node = [current_node[0], current_node[1] + 1]; break;
-                case 2: current_node = [current_node[0] - 1, current_node[1]]; break;
-                case 3: current_node = [current_node[0], current_node[1] - 1]; break;
-                case 4: current_node = [current_node[0] + 1, current_node[1]]; break;
-                default: break;
+                case 1: current_node = [current_node[0], current_node[1] + 1]; break; // Up
+                case 2: current_node = [current_node[0] - 1, current_node[1]]; break; // Right
+                case 3: current_node = [current_node[0], current_node[1] - 1]; break; // Down
+                case 4: current_node = [current_node[0] + 1, current_node[1]]; break; // Left
             }
-
             path_list.push(current_node);
         }
-
-        path_list.pop();
+        path_list.pop(); // Remove start position
         path_list.reverse();
     }
 
@@ -163,11 +190,11 @@ function depth_first() {
 
         for (let i = 0; i < list.length; i++) {
             let neighbor = list[i];
-            if (get_node(neighbor[0], neighbor[1]) == 0) {
+            if (canMove(current_cell[0], current_cell[1], neighbor[0], neighbor[1])) {
                 stack.push([neighbor, current_cell]);
                 grid[neighbor[0]][neighbor[1]] = i + 1;
 
-                if (neighbor[0] == target_pos[0] && neighbor[1] == target_pos[1]) {
+                if (neighbor[0] === target_pos[0] && neighbor[1] === target_pos[1]) {
                     found = true;
                     break;
                 }
@@ -179,19 +206,15 @@ function depth_first() {
 
     if (found) {
         let current_node = target_pos;
-
-        while (current_node[0] != start_pos[0] || current_node[1] != start_pos[1]) {
+        while (current_node[0] !== start_pos[0] || current_node[1] !== start_pos[1]) {
             path_list.push(current_node);
-
             switch (grid[current_node[0]][current_node[1]]) {
                 case 1: current_node = [current_node[0], current_node[1] + 1]; break;
                 case 2: current_node = [current_node[0] - 1, current_node[1]]; break;
                 case 3: current_node = [current_node[0], current_node[1] - 1]; break;
                 case 4: current_node = [current_node[0] + 1, current_node[1]]; break;
-                default: break;
             }
         }
-
         path_list.pop();
         path_list.reverse();
     }
@@ -225,7 +248,7 @@ function dijkstra() {
         let list = get_neighbours(current_cell, 1);
         for (let i = 0; i < list.length; i++) {
             let neighbor = list[i];
-            if (get_node(neighbor[0], neighbor[1]) === 0) {
+            if (canMove(current_cell[0], current_cell[1], neighbor[0], neighbor[1])) {
                 let new_cost = current_cost + 1;
                 if (new_cost < cost_grid[neighbor[0]][neighbor[1]]) {
                     cost_grid[neighbor[0]][neighbor[1]] = new_cost;
@@ -239,7 +262,6 @@ function dijkstra() {
 
     if (found) {
         let current_node = target_pos;
-        path_list = [];
         while (current_node[0] !== start_pos[0] || current_node[1] !== start_pos[1]) {
             path_list.push([...current_node]);
             switch (grid[current_node[0]][current_node[1]]) {
@@ -247,7 +269,6 @@ function dijkstra() {
                 case 2: current_node = [current_node[0] - 1, current_node[1]]; break;
                 case 3: current_node = [current_node[0], current_node[1] - 1]; break;
                 case 4: current_node = [current_node[0] + 1, current_node[1]]; break;
-                default: break;
             }
         }
         path_list.reverse();
@@ -278,36 +299,34 @@ function a_star() {
         let list = get_neighbours(current_cell, 1);
         frontier.splice(0, 1);
 
-        for (let i = 0; i < list.length; i++)
-            if (get_node(list[i][0], list[i][1]) == 0) {
-                frontier.push(list[i]);
-                grid[list[i][0]][list[i][1]] = i + 1;
-                cost_grid[list[i][0]][list[i][1]] = cost_grid[current_cell[0]][current_cell[1]] + 1;
+        for (let i = 0; i < list.length; i++) {
+            let neighbor = list[i];
+            if (canMove(current_cell[0], current_cell[1], neighbor[0], neighbor[1])) {
+                frontier.push(neighbor);
+                grid[neighbor[0]][neighbor[1]] = i + 1;
+                cost_grid[neighbor[0]][neighbor[1]] = cost_grid[current_cell[0]][current_cell[1]] + 1;
 
-                if (list[i][0] == target_pos[0] && list[i][1] == target_pos[1]) {
+                if (neighbor[0] === target_pos[0] && neighbor[1] === target_pos[1]) {
                     found = true;
                     break;
                 }
 
-                node_list.push(list[i]);
+                node_list.push(neighbor);
             }
+        }
     } while (frontier.length > 0 && !found);
 
     if (found) {
         let current_node = target_pos;
-
-        while (current_node[0] != start_pos[0] || current_node[1] != start_pos[1]) {
+        while (current_node[0] !== start_pos[0] || current_node[1] !== start_pos[1]) {
             switch (grid[current_node[0]][current_node[1]]) {
                 case 1: current_node = [current_node[0], current_node[1] + 1]; break;
                 case 2: current_node = [current_node[0] - 1, current_node[1]]; break;
                 case 3: current_node = [current_node[0], current_node[1] - 1]; break;
                 case 4: current_node = [current_node[0] + 1, current_node[1]]; break;
-                default: break;
             }
-
             path_list.push(current_node);
         }
-
         path_list.pop();
         path_list.reverse();
     }
@@ -317,33 +336,38 @@ function a_star() {
 
 function maze_solvers() {
     console.log("Starting maze_solvers()");
-    clear_grid(); // This now preserves walls
+    clear_grid();
     grid_clean = false;
 
     const isCanvasMode = mazeCanvas && mazeCtx;
-    console.log("Is canvas mode:", isCanvasMode);
+    const dx = Math.abs(start_pos[0] - target_pos[0]);
+    const dy = Math.abs(start_pos[1] - target_pos[1]);
 
-    if ((Math.abs(start_pos[0] - target_pos[0]) == 0 && Math.abs(start_pos[1] - target_pos[1]) == 1) ||
-        (Math.abs(start_pos[0] - target_pos[0]) == 1 && Math.abs(start_pos[1] - target_pos[1]) == 0)) {
-        console.log("Start and target are adjacent, drawing direct path");
-        if (isCanvasMode) {
-            mazeCtx.fillStyle = "red";
-            mazeCtx.fillRect(start_pos[0] * cellSize + 2, start_pos[1] * cellSize + 2, cellSize - 4, cellSize - 4);
-            mazeCtx.fillRect(target_pos[0] * cellSize + 2, target_pos[1] * cellSize + 2, cellSize - 4, cellSize - 4);
-            mazeCtx.fillStyle = "green";
-            mazeCtx.beginPath();
-            mazeCtx.arc((start_pos[0] + 0.5) * cellSize, (start_pos[1] + 0.5) * cellSize, cellSize / 4, 0, Math.PI * 2);
-            mazeCtx.fill();
-            mazeCtx.fillStyle = "red";
-            mazeCtx.beginPath();
-            mazeCtx.arc((target_pos[0] + 0.5) * cellSize, (target_pos[1] + 0.5) * cellSize, cellSize / 4, 0, Math.PI * 2);
-            mazeCtx.fill();
-        } else {
-            place_to_cell(start_pos[0], start_pos[1]).classList.add("cell_path");
-            place_to_cell(target_pos[0], target_pos[1]).classList.add("cell_path");
+    if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+        if (canMove(start_pos[0], start_pos[1], target_pos[0], target_pos[1])) {
+            console.log("Start and target are adjacent with no wall, drawing direct path");
+            if (isCanvasMode) {
+                mazeCtx.fillStyle = "red";
+                mazeCtx.fillRect(start_pos[0] * cellSize + 2, start_pos[1] * cellSize + 2, cellSize - 4, cellSize - 4);
+                mazeCtx.fillRect(target_pos[0] * cellSize + 2, target_pos[1] * cellSize + 2, cellSize - 4, cellSize - 4);
+                mazeCtx.fillStyle = "green";
+                mazeCtx.beginPath();
+                mazeCtx.arc((start_pos[0] + 0.5) * cellSize, (start_pos[1] + 0.5) * cellSize, cellSize / 4, 0, Math.PI * 2);
+                mazeCtx.fill();
+                mazeCtx.fillStyle = "red";
+                mazeCtx.beginPath();
+                mazeCtx.arc((target_pos[0] + 0.5) * cellSize, (target_pos[1] + 0.5) * cellSize, cellSize / 4, 0, Math.PI * 2);
+                mazeCtx.fill();
+            } else {
+                place_to_cell(start_pos[0], start_pos[1]).classList.add("cell_path");
+                place_to_cell(target_pos[0], target_pos[1]).classList.add("cell_path");
+            }
+            onMazeSolved();
+            return; // Exit after drawing direct path
         }
-        onMazeSolved();
-    } else if (document.querySelector("#slct_1").value == "1") {
+    }
+
+    if (document.querySelector("#slct_1").value == "1") {
         console.log("Running Breadth-First Search");
         breadth_first();
     } else if (document.querySelector("#slct_1").value == "2") {
