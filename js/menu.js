@@ -1,6 +1,11 @@
 "use strict";
 let timerInterval = null; // To store the interval ID for the timer
 let startTime = null; // To store the start time when "Play" is pressed
+// Add DOMContentLoaded listener if not already present elsewhere
+document.addEventListener("DOMContentLoaded", function () {
+    menu_event_listeners();
+});
+
 
 function hidden_clear()
 {

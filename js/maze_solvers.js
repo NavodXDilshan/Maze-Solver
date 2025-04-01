@@ -16,14 +16,12 @@ const cellSize = 30; // Must match the cellSize in canvas_recursive_backtracking
 
 function maze_solvers_interval() {
     my_interval = window.setInterval(function() {
-        // Check if we're using a canvas-based maze
         const isCanvasMode = mazeCanvas && mazeCtx;
 
         if (!path) {
             // Exploration phase
             const currentNode = node_list[node_list_index];
             if (isCanvasMode) {
-                // Draw exploration cell on canvas (blue)
                 mazeCtx.fillStyle = "blue";
                 mazeCtx.fillRect(
                     currentNode[0] * cellSize + 2,
@@ -32,7 +30,6 @@ function maze_solvers_interval() {
                     cellSize - 4
                 );
             } else {
-                // Table-based mode: add CSS class
                 place_to_cell(currentNode[0], currentNode[1]).classList.add("cell_algo");
             }
             node_list_index++;
@@ -43,7 +40,6 @@ function maze_solvers_interval() {
                 } else {
                     path = true;
                     if (isCanvasMode) {
-                        // Redraw start position on canvas
                         mazeCtx.fillStyle = "green";
                         mazeCtx.beginPath();
                         mazeCtx.arc(
@@ -63,16 +59,15 @@ function maze_solvers_interval() {
             // Path tracing phase
             if (path_list_index == path_list.length) {
                 if (isCanvasMode) {
-                    // Redraw target position on canvas
                     mazeCtx.fillStyle = "red";
                     mazeCtx.beginPath();
                     mazeCtx.arc(
-                        (target_pos[0] + 0.5) * cellSize,
+                        ( Å(target_pos[0] + 0.5) * cellSize,
                         (target_pos[1] + 0.5) * cellSize,
                         cellSize / 4,
                         0,
                         Math.PI * 2
-                        );
+                    );
                     mazeCtx.fill();
                 } else {
                     place_to_cell(target_pos[0], target_pos[1]).classList.add("cell_path");
@@ -84,7 +79,6 @@ function maze_solvers_interval() {
 
             const pathNode = path_list[path_list_index];
             if (isCanvasMode) {
-                // Draw path cell on canvas (red)
                 mazeCtx.fillStyle = "red";
                 mazeCtx.fillRect(
                     pathNode[0] * cellSize + 2,
@@ -93,13 +87,12 @@ function maze_solvers_interval() {
                     cellSize - 4
                 );
             } else {
-                // Table-based mode: remove exploration class, add path class
                 place_to_cell(pathNode[0], pathNode[1]).classList.remove("cell_algo");
                 place_to_cell(pathNode[0], pathNode[1]).classList.add("cell_path");
             }
             path_list_index++;
         }
-    }, 10);
+    }, 50); // Increased interval to 50ms for smoother animation
 }
 
 function breadth_first() {

@@ -150,35 +150,45 @@ function remove_wall(x, y)
 	place_to_cell(x, y).classList.remove("cell_wall");
 }
 
-function clear_grid()
-{
-	
-	if (!grid_clean)
-	{
-		for (let i = 0; i < timeouts.length; i++)
-			clearTimeout(timeouts[i]);
+function clear_grid() {
+    if (!grid_clean) {
+        for (let i = 0; i < timeouts.length; i++)
+            clearTimeout(timeouts[i]);
 
-		timeouts = [];
-		clearInterval(my_interval);
+        timeouts = [];
+        clearInterval(my_interval);
 
-		for (let i = 0; i < grid.length; i++)
-			for (let j = 0; j < grid[0].length; j++)
-			{
-				if (grid[i][j] > -1)
-				{
-					remove_wall(i, j);
-					place_to_cell(i, j).classList.remove("cell_algo");
-					place_to_cell(i, j).classList.remove("cell_path");
-				}
+        const isCanvasMode = mazeCanvas && mazeCtx;
 
-				else if (grid[i][j] < -1)
-					add_wall(i, j);
+        if (isCanvasMode) {
+            // Clear the canvas visually
+            mazeCtx.clearRect(0, 0, mazeCanvas.width, mazeCanvas.height);
+            // Redraw the maze (walls, start, target) if needed
+            // For simplicity, we'll assume canvas_recursive_backtracking or solver will redraw it
+            grid = grid.map(row => row.map(cell => (cell === -1 ? -1 : 0))); // Reset grid values except walls
+        } else {
+            // Table-based mode
+            for (let i = 0; i < grid.length; i++) {
+                for (let j = 0; j < grid[0].length; j++) {
+                    if (grid[i][j] > -1) {
+                        const cell = place_to_cell(i, j);
+                        if (cell) { // Check if cell exists
+                            remove_wall(i, j);
+                            cell.classList.remove("cell_algo");
+                            cell.classList.remove("cell_path");
+                        }
+                    } else if (grid[i][j] < -1) {
+                        const cell = place_to_cell(i, j);
+                        if (cell) add_wall(i, j);
+                    }
+                    const cell = place_to_cell(i, j);
+                    if (cell) cell.classList.remove("visited_cell");
+                }
+            }
+        }
 
-				place_to_cell(i, j).classList.remove("visited_cell");
-			}
-
-		grid_clean = true;
-	}
+        grid_clean = true;
+    }
 }
 
 function get_node(x, y)

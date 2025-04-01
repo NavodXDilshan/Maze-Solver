@@ -422,77 +422,58 @@ function canvas_recursive_backtracking() {
     console.log("Inside canvas_recursive_backtracking()");
     generating = true;
 
-    // Remove the existing table-based grid
-    delete_grid();
-    console.log("Table grid deleted");
+	// Do not clear the entire visualizer; keep #grid intact
+	delete_grid(); // Remove only the table, if it exists
+	const gridDiv = document.getElementById("grid");
+	gridDiv.innerHTML = ''; // Clear only the contents of #grid
 
-    // Clear the visualizer div completely
-    const visualizer = document.getElementById("visualizer");
-    visualizer.innerHTML = ''; // Remove all child elements
-    console.log("Visualizer cleared");
+	const canvas = document.createElement("canvas");
+	const ctx = canvas.getContext("2d");
+	gridDiv.appendChild(canvas); // Append canvas to #grid instead of #visualizer
 
-    // Set up the canvas
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    visualizer.appendChild(canvas);
-    console.log("Canvas created and appended to visualizer");
+	mazeCanvas = canvas;
+	mazeCtx = ctx;
 
-    // Store canvas and context globally for solving
-    mazeCanvas = canvas;
-    mazeCtx = ctx;
+	const cellSize = 30;
+	const gridWidth = grid_size_x;
+	const gridHeight = grid_size_y;
 
-    // Maze dimensions based on current grid size
-    const cellSize = 30; // Fixed size for thin walls
-    const gridWidth = grid_size_x; // Use existing grid size
-    const gridHeight = grid_size_y;
-    console.log(`Grid dimensions: ${gridWidth}x${gridHeight}, cellSize: ${cellSize}`);
+	canvas.width = gridWidth * cellSize;
+	canvas.height = gridHeight * cellSize;
 
-    canvas.width = gridWidth * cellSize;
-    canvas.height = gridHeight * cellSize;
-    console.log(`Canvas size set to ${canvas.width}x${canvas.height}`);
+	// Adjust visualizer size to fit the canvas
+	document.getElementById("visualizer").style.width = `${canvas.width}px`;
+	document.getElementById("visualizer").style.height = `${canvas.height}px`;
 
-    // Adjust visualizer size to fit the canvas
-    document.getElementById("visualizer").style.width = `${canvas.width}px`;
-    document.getElementById("visualizer").style.height = `${canvas.height}px`;
-    console.log("Visualizer size adjusted");
-
-    // Colors and styles
     ctx.strokeStyle = "black";
     ctx.lineWidth = 2;
 
-    // Grid to store the maze: 0 = wall, 1 = path
+    // Initialize grid with -1 (walls) instead of 0
     const mazeGrid = [];
     for (let y = 0; y < gridHeight; y++) {
         const row = [];
         for (let x = 0; x < gridWidth; x++) {
-            row.push(0); // Initially, all cells are walls
+            row.push(-1); // Walls are -1
         }
         mazeGrid.push(row);
     }
-    console.log("Maze grid initialized");
 
-    // Walls between cells
     const verticalWalls = Array(gridHeight).fill().map(() => Array(gridWidth - 1).fill(true));
     const horizontalWalls = Array(gridHeight - 1).fill().map(() => Array(gridWidth).fill(true));
-    console.log("Walls arrays initialized");
 
-    // Set start_pos to the first cell (top-left) and target_pos to the last cell (bottom-right)
-    start_pos = [0, 0]; // First cell
-    target_pos = [gridWidth - 1, gridHeight - 1]; // Last cell
-    console.log(`Set start_pos to ${start_pos}, target_pos to ${target_pos}`);
+    start_pos = [0, 0];
+    target_pos = [gridWidth - 1, gridHeight - 1];
 
-    // Recursive Backtracking Algorithm
     function generateMaze(x, y) {
-        mazeGrid[y][x] = 1; // Mark as path
+        mazeGrid[y][x] = 0; // Paths are 0
 
         const directions = [
-            { dx: 0, dy: -1 }, // Up
-            { dx: 1, dy: 0 },  // Right
-            { dx: 0, dy: 1 },  // Down
-            { dx: -1, dy: 0 }  // Left
+            { dx: 0, dy: -1 },
+            { dx: 1, dy: 0 },
+            { dx: 0, dy: 1 },
+            { dx: -1, dy: 0 }
         ];
 
-        // Shuffle directions
         for (let i = directions.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [directions[i], directions[j]] = [directions[j], directions[i]];
@@ -505,7 +486,7 @@ function canvas_recursive_backtracking() {
             if (
                 newX >= 0 && newX < gridWidth &&
                 newY >= 0 && newY < gridHeight &&
-                mazeGrid[newY][newX] === 0
+                mazeGrid[newY][newX] === -1
             ) {
                 if (dx === 1) verticalWalls[y][x] = false;
                 else if (dx === -1) verticalWalls[y][newX] = false;
@@ -517,12 +498,9 @@ function canvas_recursive_backtracking() {
         }
     }
 
-    // Draw the maze
     function drawMaze() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        console.log("Canvas cleared");
 
-        // Draw outer boundary
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.lineTo(canvas.width, 0);
@@ -530,25 +508,20 @@ function canvas_recursive_backtracking() {
         ctx.lineTo(0, canvas.height);
         ctx.lineTo(0, 0);
         ctx.stroke();
-        console.log("Outer boundary drawn");
 
-        // Draw vertical walls
         for (let y = 0; y < gridHeight; y++) {
             for (let x = 0; x < gridWidth - 1; x++) {
                 if (verticalWalls[y][x]) {
                     const xPos = (x + 1) * cellSize;
-                    const yPos1 = y * cellSize;
-                    const yPos2 = (y + 1) * cellSize;
+                    const yPosResized = false;
                     ctx.beginPath();
-                    ctx.moveTo(xPos, yPos1);
-                    ctx.lineTo(xPos, yPos2);
+                    ctx.moveTo(xPos, y * cellSize);
+                    ctx.lineTo(xPos, (y + 1) * cellSize);
                     ctx.stroke();
                 }
             }
         }
-        console.log("Vertical walls drawn");
 
-        // Draw horizontal walls
         for (let y = 0; y < gridHeight - 1; y++) {
             for (let x = 0; x < gridWidth; x++) {
                 if (horizontalWalls[y][x]) {
@@ -562,33 +535,24 @@ function canvas_recursive_backtracking() {
                 }
             }
         }
-        console.log("Horizontal walls drawn");
 
-        // Draw start and target positions with distinct colors
-        ctx.fillStyle = "green"; // Start position in green
+        ctx.fillStyle = "green";
         ctx.beginPath();
         ctx.arc((start_pos[0] + 0.5) * cellSize, (start_pos[1] + 0.5) * cellSize, cellSize / 4, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = "red"; // Target position in red
+        ctx.fillStyle = "red";
         ctx.beginPath();
         ctx.arc((target_pos[0] + 0.5) * cellSize, (target_pos[1] + 0.5) * cellSize, cellSize / 4, 0, Math.PI * 2);
         ctx.fill();
-        console.log("Start and target positions drawn");
     }
 
-    // Start generation from the start_pos
-    console.log(`Starting maze generation from position: ${start_pos}`);
     generateMaze(start_pos[0], start_pos[1]);
-    console.log("Maze generation completed");
-
     drawMaze();
-    console.log("Maze drawn on canvas");
 
-    // Update the global grid to reflect the maze for solving later
+    // Assign to global grid
     grid = mazeGrid;
     generating = false;
-    console.log("Global grid updated, generation complete");
 }
 
 
