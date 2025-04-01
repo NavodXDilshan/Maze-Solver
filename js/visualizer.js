@@ -154,37 +154,79 @@ function clear_grid() {
     if (!grid_clean) {
         for (let i = 0; i < timeouts.length; i++)
             clearTimeout(timeouts[i]);
-
         timeouts = [];
         clearInterval(my_interval);
 
         const isCanvasMode = mazeCanvas && mazeCtx;
 
         if (isCanvasMode) {
-            // Clear the canvas visually
+            const scale = mazeCanvas.width / (grid_size_x * 30); // Original cellSize = 30
+            const cellWidth = mazeCanvas.width / grid_size_x;
+            const cellHeight = mazeCanvas.height / grid_size_y;
+
             mazeCtx.clearRect(0, 0, mazeCanvas.width, mazeCanvas.height);
-            // Redraw the maze (walls, start, target) if needed
-            // For simplicity, we'll assume canvas_recursive_backtracking or solver will redraw it
-            grid = grid.map(row => row.map(cell => (cell === -1 ? -1 : 0))); // Reset grid values except walls
+
+            // Redraw walls using verticalWalls and horizontalWalls
+            mazeCtx.strokeStyle = "black";
+            mazeCtx.lineWidth = 2 * scale;
+            mazeCtx.beginPath();
+            for (let y = 0; y < grid_size_y; y++) {
+                for (let x = 0; x < grid_size_x - 1; x++) {
+                    if (verticalWalls && verticalWalls[y] && verticalWalls[y][x]) {
+                        mazeCtx.moveTo((x + 1) * cellWidth, y * cellHeight);
+                        mazeCtx.lineTo((x + 1) * cellWidth, (y + 1) * cellHeight);
+                    }
+                }
+            }
+            for (let y = 0; y < grid_size_y - 1; y++) {
+                for (let x = 0; x < grid_size_x; x++) {
+                    if (horizontalWalls && horizontalWalls[y] && horizontalWalls[y][x]) {
+                        mazeCtx.moveTo(x * cellWidth, (y + 1) * cellHeight);
+                        mazeCtx.lineTo((x + 1) * cellWidth, (y + 1) * cellHeight);
+                    }
+                }
+            }
+            mazeCtx.stroke();
+
+            // Redraw outer boundary
+            mazeCtx.beginPath();
+            mazeCtx.moveTo(0, 0);
+            mazeCtx.lineTo(mazeCanvas.width, 0);
+            mazeCtx.lineTo(mazeCanvas.width, mazeCanvas.height);
+            mazeCtx.lineTo(0, mazeCanvas.height);
+            mazeCtx.lineTo(0, 0);
+            mazeCtx.stroke();
+
+            // Redraw start and target
+            mazeCtx.fillStyle = "green";
+            mazeCtx.beginPath();
+            mazeCtx.arc((start_pos[0] + 0.5) * cellWidth, (start_pos[1] + 0.5) * cellHeight, cellWidth / 4, 0, Math.PI * 2);
+            mazeCtx.fill();
+
+            mazeCtx.fillStyle = "red";
+            mazeCtx.beginPath();
+            mazeCtx.arc((target_pos[0] + 0.5) * cellWidth, (target_pos[1] + 0.5) * cellHeight, cellWidth / 4, 0, Math.PI * 2);
+            mazeCtx.fill();
+
+            // Reset grid values to original state (0 or -1), clearing solver markings
+            grid = grid.map(row => row.map(cell => (cell === -1 ? -1 : 0)));
         } else {
             // Table-based mode
             for (let i = 0; i < grid.length; i++) {
                 for (let j = 0; j < grid[0].length; j++) {
-                    if (grid[i][j] > -1) {
-                        const cell = place_to_cell(i, j);
-                        if (cell) { // Check if cell exists
-                            remove_wall(i, j);
-                            cell.classList.remove("cell_algo");
-                            cell.classList.remove("cell_path");
-                        }
-                    } else if (grid[i][j] < -1) {
-                        const cell = place_to_cell(i, j);
-                        if (cell) add_wall(i, j);
-                    }
                     const cell = place_to_cell(i, j);
-                    if (cell) cell.classList.remove("visited_cell");
+                    if (!cell) continue;
+                    if (grid[i][j] > -1) {
+                        remove_wall(i, j);
+                        cell.classList.remove("cell_algo");
+                        cell.classList.remove("cell_path");
+                    } else if (grid[i][j] < -1) {
+                        add_wall(i, j);
+                    }
+                    cell.classList.remove("visited_cell");
                 }
             }
+            grid = grid.map(row => row.map(cell => (cell === -1 ? -1 : 0)));
         }
 
         grid_clean = true;

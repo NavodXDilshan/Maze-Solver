@@ -418,71 +418,85 @@ function input_image(mazeData) {
 let mazeCanvas = null;
 let mazeCtx = null;
 
+// Add global variables for wall data
+let verticalWalls = null;
+let horizontalWalls = null;
+
 function canvas_recursive_backtracking() {
     console.log("Inside canvas_recursive_backtracking()");
     generating = true;
 
-	// Do not clear the entire visualizer; keep #grid intact
-	delete_grid(); // Remove only the table, if it exists
-	const gridDiv = document.getElementById("grid");
-	gridDiv.innerHTML = ''; // Clear only the contents of #grid
+    delete_grid();
+    const gridDiv = document.getElementById("grid");
+    gridDiv.innerHTML = '';
 
-	const canvas = document.createElement("canvas");
-	const ctx = canvas.getContext("2d");
-	gridDiv.appendChild(canvas); // Append canvas to #grid instead of #visualizer
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    gridDiv.appendChild(canvas);
 
-	mazeCanvas = canvas;
-	mazeCtx = ctx;
+    mazeCanvas = canvas;
+    mazeCtx = ctx;
 
-	const cellSize = 30;
-	const gridWidth = grid_size_x;
-	const gridHeight = grid_size_y;
+    const menuWidth = 323;
+    const maxWidth = window.innerWidth - menuWidth;
+    const maxHeight = window.innerHeight;
+    const cellSize = 30;
+    const gridWidth = grid_size_x;
+    const gridHeight = grid_size_y;
 
-	canvas.width = gridWidth * cellSize;
-	canvas.height = gridHeight * cellSize;
+    const canvasWidth = gridWidth * cellSize;
+    const canvasHeight = gridHeight * cellSize;
+    let scale = Math.min(maxWidth / canvasWidth, maxHeight / canvasHeight);
+    if (scale > 1) scale = 1;
 
-	// Adjust visualizer size to fit the canvas
-	document.getElementById("visualizer").style.width = `${canvas.width}px`;
-	document.getElementById("visualizer").style.height = `${canvas.height}px`;
+    canvas.width = canvasWidth * scale;
+    canvas.height = canvasHeight * scale;
+
+    gridDiv.style.width = `${canvas.width}px`;
+    gridDiv.style.height = `${canvas.height}px`;
+    gridDiv.style.margin = "0 auto";
+    gridDiv.style.display = "flex";
+    gridDiv.style.alignItems = "center";
+    gridDiv.style.justifyContent = "center";
+    document.getElementById("visualizer").style.width = `${maxWidth}px`;
+    document.getElementById("visualizer").style.height = `${maxHeight}px`;
+    document.getElementById("visualizer").style.display = "flex";
+    document.getElementById("visualizer").style.alignItems = "center";
+    document.getElementById("visualizer").style.justifyContent = "center";
 
     ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2 * scale;
 
-    // Initialize grid with -1 (walls) instead of 0
     const mazeGrid = [];
     for (let y = 0; y < gridHeight; y++) {
         const row = [];
         for (let x = 0; x < gridWidth; x++) {
-            row.push(-1); // Walls are -1
+            row.push(-1);
         }
         mazeGrid.push(row);
     }
 
-    const verticalWalls = Array(gridHeight).fill().map(() => Array(gridWidth - 1).fill(true));
-    const horizontalWalls = Array(gridHeight - 1).fill().map(() => Array(gridWidth).fill(true));
+    verticalWalls = Array(gridHeight).fill().map(() => Array(gridWidth - 1).fill(true));
+    horizontalWalls = Array(gridHeight - 1).fill().map(() => Array(gridWidth).fill(true));
 
     start_pos = [0, 0];
     target_pos = [gridWidth - 1, gridHeight - 1];
 
     function generateMaze(x, y) {
-        mazeGrid[y][x] = 0; // Paths are 0
-
+        mazeGrid[y][x] = 0;
         const directions = [
             { dx: 0, dy: -1 },
             { dx: 1, dy: 0 },
             { dx: 0, dy: 1 },
             { dx: -1, dy: 0 }
         ];
-
         for (let i = directions.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [directions[i], directions[j]] = [directions[j], directions[i]];
         }
-
         for (const { dx, dy } of directions) {
             const newX = x + dx;
             const newY = y + dy;
-
             if (
                 newX >= 0 && newX < gridWidth &&
                 newY >= 0 && newY < gridHeight &&
@@ -492,7 +506,6 @@ function canvas_recursive_backtracking() {
                 else if (dx === -1) verticalWalls[y][newX] = false;
                 else if (dy === 1) horizontalWalls[y][x] = false;
                 else if (dy === -1) horizontalWalls[newY][x] = false;
-
                 generateMaze(newX, newY);
             }
         }
@@ -502,6 +515,25 @@ function canvas_recursive_backtracking() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         ctx.beginPath();
+        for (let y = 0; y < gridHeight; y++) {
+            for (let x = 0; x < gridWidth - 1; x++) {
+                if (verticalWalls[y][x]) {
+                    ctx.moveTo((x + 1) * cellSize * scale, y * cellSize * scale);
+                    ctx.lineTo((x + 1) * cellSize * scale, (y + 1) * cellSize * scale);
+                }
+            }
+        }
+        for (let y = 0; y < gridHeight - 1; y++) {
+            for (let x = 0; x < gridWidth; x++) {
+                if (horizontalWalls[y][x]) {
+                    ctx.moveTo(x * cellSize * scale, (y + 1) * cellSize * scale);
+                    ctx.lineTo((x + 1) * cellSize * scale, (y + 1) * cellSize * scale);
+                }
+            }
+        }
+        ctx.stroke();
+
+        ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.lineTo(canvas.width, 0);
         ctx.lineTo(canvas.width, canvas.height);
@@ -509,48 +541,19 @@ function canvas_recursive_backtracking() {
         ctx.lineTo(0, 0);
         ctx.stroke();
 
-        for (let y = 0; y < gridHeight; y++) {
-            for (let x = 0; x < gridWidth - 1; x++) {
-                if (verticalWalls[y][x]) {
-                    const xPos = (x + 1) * cellSize;
-                    const yPosResized = false;
-                    ctx.beginPath();
-                    ctx.moveTo(xPos, y * cellSize);
-                    ctx.lineTo(xPos, (y + 1) * cellSize);
-                    ctx.stroke();
-                }
-            }
-        }
-
-        for (let y = 0; y < gridHeight - 1; y++) {
-            for (let x = 0; x < gridWidth; x++) {
-                if (horizontalWalls[y][x]) {
-                    const xPos1 = x * cellSize;
-                    const xPos2 = (x + 1) * cellSize;
-                    const yPos = (y + 1) * cellSize;
-                    ctx.beginPath();
-                    ctx.moveTo(xPos1, yPos);
-                    ctx.lineTo(xPos2, yPos);
-                    ctx.stroke();
-                }
-            }
-        }
-
         ctx.fillStyle = "green";
         ctx.beginPath();
-        ctx.arc((start_pos[0] + 0.5) * cellSize, (start_pos[1] + 0.5) * cellSize, cellSize / 4, 0, Math.PI * 2);
+        ctx.arc((start_pos[0] + 0.5) * cellSize * scale, (start_pos[1] + 0.5) * cellSize * scale, cellSize / 4 * scale, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.fillStyle = "red";
         ctx.beginPath();
-        ctx.arc((target_pos[0] + 0.5) * cellSize, (target_pos[1] + 0.5) * cellSize, cellSize / 4, 0, Math.PI * 2);
+        ctx.arc((target_pos[0] + 0.5) * cellSize * scale, (target_pos[1] + 0.5) * cellSize * scale, cellSize / 4 * scale, 0, Math.PI * 2);
         ctx.fill();
     }
 
     generateMaze(start_pos[0], start_pos[1]);
     drawMaze();
-
-    // Assign to global grid
     grid = mazeGrid;
     generating = false;
 }

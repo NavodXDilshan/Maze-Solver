@@ -17,17 +17,18 @@ const cellSize = 30; // Must match the cellSize in canvas_recursive_backtracking
 function maze_solvers_interval() {
     my_interval = window.setInterval(function() {
         const isCanvasMode = mazeCanvas && mazeCtx;
+        const cellWidth = isCanvasMode ? mazeCanvas.width / grid_size_x : 30;
+        const cellHeight = isCanvasMode ? mazeCanvas.height / grid_size_y : 30;
 
         if (!path) {
-            // Exploration phase
             const currentNode = node_list[node_list_index];
             if (isCanvasMode) {
                 mazeCtx.fillStyle = "blue";
                 mazeCtx.fillRect(
-                    currentNode[0] * cellSize + 2,
-                    currentNode[1] * cellSize + 2,
-                    cellSize - 4,
-                    cellSize - 4
+                    currentNode[0] * cellWidth + 2,
+                    currentNode[1] * cellHeight + 2,
+                    cellWidth - 4,
+                    cellHeight - 4
                 );
             } else {
                 place_to_cell(currentNode[0], currentNode[1]).classList.add("cell_algo");
@@ -43,9 +44,9 @@ function maze_solvers_interval() {
                         mazeCtx.fillStyle = "green";
                         mazeCtx.beginPath();
                         mazeCtx.arc(
-                            (start_pos[0] + 0.5) * cellSize,
-                            (start_pos[1] + 0.5) * cellSize,
-                            cellSize / 4,
+                            (start_pos[0] + 0.5) * cellWidth,
+                            (start_pos[1] + 0.5) * cellHeight,
+                            cellWidth / 4,
                             0,
                             Math.PI * 2
                         );
@@ -56,15 +57,14 @@ function maze_solvers_interval() {
                 }
             }
         } else {
-            // Path tracing phase
             if (path_list_index == path_list.length) {
                 if (isCanvasMode) {
                     mazeCtx.fillStyle = "red";
                     mazeCtx.beginPath();
                     mazeCtx.arc(
-                        ( Å(target_pos[0] + 0.5) * cellSize,
-                        (target_pos[1] + 0.5) * cellSize,
-                        cellSize / 4,
+                        (target_pos[0] + 0.5) * cellWidth,
+                        (target_pos[1] + 0.5) * cellHeight,
+                        cellWidth / 4,
                         0,
                         Math.PI * 2
                     );
@@ -81,10 +81,10 @@ function maze_solvers_interval() {
             if (isCanvasMode) {
                 mazeCtx.fillStyle = "red";
                 mazeCtx.fillRect(
-                    pathNode[0] * cellSize + 2,
-                    pathNode[1] * cellSize + 2,
-                    cellSize - 4,
-                    cellSize - 4
+                    pathNode[0] * cellWidth + 2,
+                    pathNode[1] * cellHeight + 2,
+                    cellWidth - 4,
+                    cellHeight - 4
                 );
             } else {
                 place_to_cell(pathNode[0], pathNode[1]).classList.remove("cell_algo");
@@ -92,7 +92,7 @@ function maze_solvers_interval() {
             }
             path_list_index++;
         }
-    }, 50); // Increased interval to 50ms for smoother animation
+    }, 50);
 }
 
 function breadth_first() {
@@ -316,23 +316,20 @@ function a_star() {
 }
 
 function maze_solvers() {
-    console.log("Starting maze_solvers()"); // Debug log
-    clear_grid();
+    console.log("Starting maze_solvers()");
+    clear_grid(); // This now preserves walls
     grid_clean = false;
 
-    // Check if we're using a canvas-based maze
     const isCanvasMode = mazeCanvas && mazeCtx;
-    console.log("Is canvas mode:", isCanvasMode); // Debug log
+    console.log("Is canvas mode:", isCanvasMode);
 
     if ((Math.abs(start_pos[0] - target_pos[0]) == 0 && Math.abs(start_pos[1] - target_pos[1]) == 1) ||
         (Math.abs(start_pos[0] - target_pos[0]) == 1 && Math.abs(start_pos[1] - target_pos[1]) == 0)) {
-        console.log("Start and target are adjacent, drawing direct path"); // Debug log
+        console.log("Start and target are adjacent, drawing direct path");
         if (isCanvasMode) {
-            // Draw a direct path on canvas
             mazeCtx.fillStyle = "red";
             mazeCtx.fillRect(start_pos[0] * cellSize + 2, start_pos[1] * cellSize + 2, cellSize - 4, cellSize - 4);
             mazeCtx.fillRect(target_pos[0] * cellSize + 2, target_pos[1] * cellSize + 2, cellSize - 4, cellSize - 4);
-            // Redraw start and target
             mazeCtx.fillStyle = "green";
             mazeCtx.beginPath();
             mazeCtx.arc((start_pos[0] + 0.5) * cellSize, (start_pos[1] + 0.5) * cellSize, cellSize / 4, 0, Math.PI * 2);
@@ -347,18 +344,18 @@ function maze_solvers() {
         }
         onMazeSolved();
     } else if (document.querySelector("#slct_1").value == "1") {
-        console.log("Running Breadth-First Search"); // Debug log
+        console.log("Running Breadth-First Search");
         breadth_first();
     } else if (document.querySelector("#slct_1").value == "2") {
-        console.log("Running Depth-First Search"); // Debug log
+        console.log("Running Depth-First Search");
         depth_first();
     } else if (document.querySelector("#slct_1").value == "4") {
-        console.log("Running Dijkstra"); // Debug log
+        console.log("Running Dijkstra");
         dijkstra();
     } else if (document.querySelector("#slct_1").value == "5") {
-        console.log("Running A*"); // Debug log
+        console.log("Running A*");
         a_star();
     } else {
-        console.log("No solving algorithm selected or invalid value:", document.querySelector("#slct_1").value); // Debug log
+        console.log("No solving algorithm selected or invalid value:", document.querySelector("#slct_1").value);
     }
 }
