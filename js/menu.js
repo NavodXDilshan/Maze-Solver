@@ -99,6 +99,7 @@ function menu_event_listeners()
 			document.querySelector("#slct_2").value = "0";
 
 		generating = false;
+		console.log("Solver is loaded")
 		clear_grid();
 		startTimer(); // Start the timer when "Play" is pressed
         maze_solvers(); // Assume this function solves the maze

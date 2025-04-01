@@ -12,30 +12,91 @@ function get_neighbours(cell, distance) {
     return [up, right, down, left];
 }
 
+const cellSize = 30; // Must match the cellSize in canvas_recursive_backtracking
+
 function maze_solvers_interval() {
     my_interval = window.setInterval(function() {
+        // Check if we're using a canvas-based maze
+        const isCanvasMode = mazeCanvas && mazeCtx;
+
         if (!path) {
-            place_to_cell(node_list[node_list_index][0], node_list[node_list_index][1]).classList.add("cell_algo");
+            // Exploration phase
+            const currentNode = node_list[node_list_index];
+            if (isCanvasMode) {
+                // Draw exploration cell on canvas (blue)
+                mazeCtx.fillStyle = "blue";
+                mazeCtx.fillRect(
+                    currentNode[0] * cellSize + 2,
+                    currentNode[1] * cellSize + 2,
+                    cellSize - 4,
+                    cellSize - 4
+                );
+            } else {
+                // Table-based mode: add CSS class
+                place_to_cell(currentNode[0], currentNode[1]).classList.add("cell_algo");
+            }
             node_list_index++;
 
             if (node_list_index == node_list.length) {
-                if (!found)
+                if (!found) {
                     clearInterval(my_interval);
-                else {
+                } else {
                     path = true;
-                    place_to_cell(start_pos[0], start_pos[1]).classList.add("cell_path");
+                    if (isCanvasMode) {
+                        // Redraw start position on canvas
+                        mazeCtx.fillStyle = "green";
+                        mazeCtx.beginPath();
+                        mazeCtx.arc(
+                            (start_pos[0] + 0.5) * cellSize,
+                            (start_pos[1] + 0.5) * cellSize,
+                            cellSize / 4,
+                            0,
+                            Math.PI * 2
+                        );
+                        mazeCtx.fill();
+                    } else {
+                        place_to_cell(start_pos[0], start_pos[1]).classList.add("cell_path");
+                    }
                 }
             }
         } else {
+            // Path tracing phase
             if (path_list_index == path_list.length) {
-                place_to_cell(target_pos[0], target_pos[1]).classList.add("cell_path");
+                if (isCanvasMode) {
+                    // Redraw target position on canvas
+                    mazeCtx.fillStyle = "red";
+                    mazeCtx.beginPath();
+                    mazeCtx.arc(
+                        (target_pos[0] + 0.5) * cellSize,
+                        (target_pos[1] + 0.5) * cellSize,
+                        cellSize / 4,
+                        0,
+                        Math.PI * 2
+                        );
+                    mazeCtx.fill();
+                } else {
+                    place_to_cell(target_pos[0], target_pos[1]).classList.add("cell_path");
+                }
                 clearInterval(my_interval);
-                onMazeSolved(); 
+                onMazeSolved();
                 return;
             }
 
-            place_to_cell(path_list[path_list_index][0], path_list[path_list_index][1]).classList.remove("cell_algo");
-            place_to_cell(path_list[path_list_index][0], path_list[path_list_index][1]).classList.add("cell_path");
+            const pathNode = path_list[path_list_index];
+            if (isCanvasMode) {
+                // Draw path cell on canvas (red)
+                mazeCtx.fillStyle = "red";
+                mazeCtx.fillRect(
+                    pathNode[0] * cellSize + 2,
+                    pathNode[1] * cellSize + 2,
+                    cellSize - 4,
+                    cellSize - 4
+                );
+            } else {
+                // Table-based mode: remove exploration class, add path class
+                place_to_cell(pathNode[0], pathNode[1]).classList.remove("cell_algo");
+                place_to_cell(pathNode[0], pathNode[1]).classList.add("cell_path");
+            }
             path_list_index++;
         }
     }, 10);
@@ -49,7 +110,7 @@ function breadth_first() {
     found = false;
     path = false;
     let frontier = [start_pos];
-    console.log(start_pos);
+    console.log("Starting Breadth-First Search from:", start_pos);
     grid[start_pos[0]][start_pos[1]] = 1;
 
     do {
@@ -93,66 +154,57 @@ function breadth_first() {
 }
 
 function depth_first() {
-   
-    node_list = [];         // List of explored nodes for visualization
-    node_list_index = 0;    // Index for animation
-    path_list = [];         // List of nodes in the final path
-    path_list_index = 0;    // Index for path animation
-    found = false;          // Flag to indicate if target is reached
-    path = false;           // Flag to switch between exploration and path tracing
+    node_list = [];
+    node_list_index = 0;
+    path_list = [];
+    path_list_index = 0;
+    found = false;
+    path = false;
 
-  
-    let stack = [[start_pos, null]]; // Each entry is [position, parent]
-    grid[start_pos[0]][start_pos[1]] = 1; // Mark start as visited 
+    let stack = [[start_pos, null]];
+    grid[start_pos[0]][start_pos[1]] = 1;
 
-    // Exploration phase
     while (stack.length > 0 && !found) {
-        let [current_cell, parent] = stack.pop(); 
-        let list = get_neighbours(current_cell, 1); 
+        let [current_cell, parent] = stack.pop();
+        let list = get_neighbours(current_cell, 1);
 
-        // Explore neighbors
         for (let i = 0; i < list.length; i++) {
             let neighbor = list[i];
-            if (get_node(neighbor[0], neighbor[1]) == 0) { // Unvisited cell
-                stack.push([neighbor, current_cell]); // Push neighbor with parent reference
-                grid[neighbor[0]][neighbor[1]] = i + 1; // Mark direction (1: right, 2: up, 3: left, 4: down)
+            if (get_node(neighbor[0], neighbor[1]) == 0) {
+                stack.push([neighbor, current_cell]);
+                grid[neighbor[0]][neighbor[1]] = i + 1;
 
                 if (neighbor[0] == target_pos[0] && neighbor[1] == target_pos[1]) {
-                    found = true; // Target found
+                    found = true;
                     break;
                 }
 
-                node_list.push(neighbor); // Add to visualization list
+                node_list.push(neighbor);
             }
         }
     }
 
-    // Path reconstruction phase 
     if (found) {
         let current_node = target_pos;
 
-        // Backtrack from target to start using direction markers
         while (current_node[0] != start_pos[0] || current_node[1] != start_pos[1]) {
             path_list.push(current_node);
 
-            // Move to parent based on direction stored in grid
             switch (grid[current_node[0]][current_node[1]]) {
-                case 1: current_node = [current_node[0], current_node[1] + 1]; break; // Right
-                case 2: current_node = [current_node[0] - 1, current_node[1]]; break; // Up
-                case 3: current_node = [current_node[0], current_node[1] - 1]; break; // Left
-                case 4: current_node = [current_node[0] + 1, current_node[1]]; break; // Down
+                case 1: current_node = [current_node[0], current_node[1] + 1]; break;
+                case 2: current_node = [current_node[0] - 1, current_node[1]]; break;
+                case 3: current_node = [current_node[0], current_node[1] - 1]; break;
+                case 4: current_node = [current_node[0] + 1, current_node[1]]; break;
                 default: break;
             }
         }
 
-        path_list.pop();  
-        path_list.reverse(); 
+        path_list.pop();
+        path_list.reverse();
     }
 
-    // Start the animation using the existing interval function
     maze_solvers_interval();
 }
-
 
 function dijkstra() {
     node_list = [];
@@ -167,7 +219,7 @@ function dijkstra() {
     cost_grid[start_pos[0]][start_pos[1]] = 0;
 
     let frontier = [[0, start_pos]];
-    
+
     while (frontier.length > 0 && !found) {
         frontier.sort((a, b) => a[0] - b[0]);
         let [current_cost, current_cell] = frontier.shift();
@@ -194,9 +246,9 @@ function dijkstra() {
 
     if (found) {
         let current_node = target_pos;
-        path_list = []; // Reset path_list
+        path_list = [];
         while (current_node[0] !== start_pos[0] || current_node[1] !== start_pos[1]) {
-            path_list.push([...current_node]); // Add current node to path
+            path_list.push([...current_node]);
             switch (grid[current_node[0]][current_node[1]]) {
                 case 1: current_node = [current_node[0], current_node[1] + 1]; break;
                 case 2: current_node = [current_node[0] - 1, current_node[1]]; break;
@@ -205,7 +257,6 @@ function dijkstra() {
                 default: break;
             }
         }
-        // Do not pop here; we want all intermediate nodes except start
         path_list.reverse();
     }
 
@@ -272,21 +323,49 @@ function a_star() {
 }
 
 function maze_solvers() {
+    console.log("Starting maze_solvers()"); // Debug log
     clear_grid();
     grid_clean = false;
 
+    // Check if we're using a canvas-based maze
+    const isCanvasMode = mazeCanvas && mazeCtx;
+    console.log("Is canvas mode:", isCanvasMode); // Debug log
+
     if ((Math.abs(start_pos[0] - target_pos[0]) == 0 && Math.abs(start_pos[1] - target_pos[1]) == 1) ||
         (Math.abs(start_pos[0] - target_pos[0]) == 1 && Math.abs(start_pos[1] - target_pos[1]) == 0)) {
-        place_to_cell(start_pos[0], start_pos[1]).classList.add("cell_path");
-        place_to_cell(target_pos[0], target_pos[1]).classList.add("cell_path");
+        console.log("Start and target are adjacent, drawing direct path"); // Debug log
+        if (isCanvasMode) {
+            // Draw a direct path on canvas
+            mazeCtx.fillStyle = "red";
+            mazeCtx.fillRect(start_pos[0] * cellSize + 2, start_pos[1] * cellSize + 2, cellSize - 4, cellSize - 4);
+            mazeCtx.fillRect(target_pos[0] * cellSize + 2, target_pos[1] * cellSize + 2, cellSize - 4, cellSize - 4);
+            // Redraw start and target
+            mazeCtx.fillStyle = "green";
+            mazeCtx.beginPath();
+            mazeCtx.arc((start_pos[0] + 0.5) * cellSize, (start_pos[1] + 0.5) * cellSize, cellSize / 4, 0, Math.PI * 2);
+            mazeCtx.fill();
+            mazeCtx.fillStyle = "red";
+            mazeCtx.beginPath();
+            mazeCtx.arc((target_pos[0] + 0.5) * cellSize, (target_pos[1] + 0.5) * cellSize, cellSize / 4, 0, Math.PI * 2);
+            mazeCtx.fill();
+        } else {
+            place_to_cell(start_pos[0], start_pos[1]).classList.add("cell_path");
+            place_to_cell(target_pos[0], target_pos[1]).classList.add("cell_path");
+        }
         onMazeSolved();
     } else if (document.querySelector("#slct_1").value == "1") {
+        console.log("Running Breadth-First Search"); // Debug log
         breadth_first();
     } else if (document.querySelector("#slct_1").value == "2") {
+        console.log("Running Depth-First Search"); // Debug log
         depth_first();
     } else if (document.querySelector("#slct_1").value == "4") {
+        console.log("Running Dijkstra"); // Debug log
         dijkstra();
     } else if (document.querySelector("#slct_1").value == "5") {
+        console.log("Running A*"); // Debug log
         a_star();
+    } else {
+        console.log("No solving algorithm selected or invalid value:", document.querySelector("#slct_1").value); // Debug log
     }
 }

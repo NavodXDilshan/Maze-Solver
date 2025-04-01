@@ -110,9 +110,11 @@ function generate_grid_vision()
 	
 }
 
-function delete_grid()
-{
-	document.querySelector("#my_table").remove();
+function delete_grid() {
+    const table = document.querySelector("#my_table");
+    if (table) {
+        table.remove();
+    }
 }
 
 function cell_to_place(cell)
@@ -150,6 +152,7 @@ function remove_wall(x, y)
 
 function clear_grid()
 {
+	
 	if (!grid_clean)
 	{
 		for (let i = 0; i < timeouts.length; i++)
