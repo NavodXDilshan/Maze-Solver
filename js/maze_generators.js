@@ -541,7 +541,7 @@ function canvas_recursive_backtracking() {
         ctx.lineTo(0, 0);
         ctx.stroke();
 
-        ctx.fillStyle = "green";
+        ctx.fillStyle = "blue";
         ctx.beginPath();
         ctx.arc((start_pos[0] + 0.5) * cellSize * scale, (start_pos[1] + 0.5) * cellSize * scale, cellSize / 4 * scale, 0, Math.PI * 2);
         ctx.fill();
