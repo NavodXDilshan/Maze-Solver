@@ -82,12 +82,12 @@ def process_maze_image(image_path):
     RED = np.array([255, 0, 0])  # End point
     BLACK = np.array([0, 0, 0])  # Walls
     WHITE = np.array([255, 255, 255])  # Paths
-    COLOR_TOLERANCE = 20  # Tolerance for color matching
+    COLOR_TOLERANCE = 50  # Tolerance for color matching
     WALL_TOLERANCE = 5  # Tolerance for wall color matching
-    WALL_THICKNESS = 5  # Number of pixels to check around the boundary
+    WALL_THICKNESS = 8  # Number of pixels to check around the boundary
     MIN_WALL_PIXELS = 8  # Increased to reduce false positives
     THRESHOLD = 150  # Increased to ensure teal border becomes white
-    BOUNDARY_OFFSET = 5  # Number of pixels to skip at the cell boundaries
+    BOUNDARY_OFFSET = 3  # Number of pixels to skip at the cell boundaries
 
     # Preprocess the warped image
     blue_mask = np.all(np.abs(img_array - BLUE) <= COLOR_TOLERANCE, axis=2)
